@@ -99,14 +99,26 @@ constexpr int futility_move_count(bool improving, Depth depth) {
 
 // Guarantee evaluation does not hit the tablebase range
 constexpr Value to_static_eval(const Value v) {
-    return std::clamp(int(v), VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
+    return std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
 }
 
 // History and stats update bonus, based on depth
-int stat_bonus(Depth d) { return std::min(223 * d - 332, 1258); }
+constexpr int stat_bonus(Depth d) {
+    constexpr int coefficient = 223;
+    constexpr int intercept = 332;
+    constexpr int max_bonus = 1258;
+    
+    return std::clamp(coefficient * d - intercept, 0, max_bonus);
+}
 
 // History and stats update malus, based on depth
-int stat_malus(Depth d) { return std::min(536 * d - 299, 1353); }
+constexpr int stat_malus(Depth d) {
+    constexpr int coefficient = 536;
+    constexpr int intercept = 299;
+    constexpr int max_malus = 1353;
+    
+    return std::clamp(coefficient * d - intercept, 0, max_malus);
+}
 
 // Add a small random component to draw evaluations to avoid 3-fold blindness
 Value value_draw(const Thread* thisThread) {
