@@ -44,6 +44,7 @@
 #include "timeman.h"
 #include "tt.h"
 #include "uci.h"
+#include "types.h"
 
 namespace Stockfish {
 
@@ -78,15 +79,22 @@ enum NodeType {
 static constexpr double EvalLevel[10] = {1.043, 1.017, 0.952, 1.009, 0.971,
                                          1.002, 0.992, 0.947, 1.046, 1.001};
 
+// Default values for the minimum and maximum value of a score
+const Value VALUE_MIN = -VALUE_INFINITE;
+const Value VALUE_MAX = VALUE_INFINITE;
+
 // Futility margin
 Value futility_margin(Depth d, bool noTtCutNode, bool improving, bool oppWorsening) {
-    const Value BaseFutilityMultiplier = 118;
-    const Value NoTtCutNodeMultiplier = 44;
-    const Value ImprovingDeductionMultiplier = 53;
-    const Value OppWorseningDeductionBase = 309;
-    const Value OppWorseningDeductionIncrement = 47;
-    const Value OppWorseningDeductionDenominator = 1024;
-    
+    constexpr Value BaseFutilityMultiplier = 118;
+    constexpr Value NoTtCutNodeMultiplier = 44;
+    constexpr Value ImprovingDeductionMultiplier = 53;
+    constexpr Value OppWorseningDeductionBase = 309;
+    constexpr Value OppWorseningDeductionIncrement = 47;
+    constexpr Value OppWorseningDeductionDenominator = 1024;
+
+    // // The necessary condition is that d is at least 1 to avoid division by zero
+    d = std::max(d, Depth(1));
+
     // Calculating the basic multiplier for the margin of futility
     Value futilityMultiplier = BaseFutilityMultiplier - NoTtCutNodeMultiplier * noTtCutNode;
 
@@ -99,6 +107,9 @@ Value futility_margin(Depth d, bool noTtCutNode, bool improving, bool oppWorseni
 
     // Calculation of the total margin of futility
     Value totalFutilityMargin = futilityMultiplier * d - improvingDeduction - oppWorseningDeduction;
+
+    // Let's make sure the value stays within the acceptable range
+    totalFutilityMargin = std::clamp(totalFutilityMargin, VALUE_MIN + 1, VALUE_MAX - 1);
 
     return totalFutilityMargin;
 }
