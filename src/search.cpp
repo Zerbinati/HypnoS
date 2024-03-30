@@ -534,7 +534,6 @@ void Thread::search() {
             double bestMoveInstability = 1 + 1.79 * totBestMoveChanges / Threads.size();
 			int    el                  = std::clamp((bestValue + 750) / 150, 0, 9);
 
-							  
 			double totalTime = Time.optimum() * fallingEval * reduction * bestMoveInstability * EvalLevel[el];
 																				   
 																   
