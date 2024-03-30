@@ -80,11 +80,27 @@ static constexpr double EvalLevel[10] = {1.043, 1.017, 0.952, 1.009, 0.971,
 
 // Futility margin
 Value futility_margin(Depth d, bool noTtCutNode, bool improving, bool oppWorsening) {
-    Value futilityMult       = 118 - 44 * noTtCutNode;
-    Value improvingDeduction = 53 * improving * futilityMult / 32;
-    Value worseningDeduction = (309 + 47 * improving) * oppWorsening * futilityMult / 1024;
+    const Value BaseFutilityMultiplier = 118;
+    const Value NoTtCutNodeMultiplier = 44;
+    const Value ImprovingDeductionMultiplier = 53;
+    const Value OppWorseningDeductionBase = 309;
+    const Value OppWorseningDeductionIncrement = 47;
+    const Value OppWorseningDeductionDenominator = 1024;
+    
+    // Calculating the basic multiplier for the margin of futility
+    Value futilityMultiplier = BaseFutilityMultiplier - NoTtCutNodeMultiplier * noTtCutNode;
 
-    return futilityMult * d - improvingDeduction - worseningDeduction;
+    // Calculating the deduction for improving nodes
+    Value improvingDeduction = ImprovingDeductionMultiplier * improving * futilityMultiplier / 32;
+
+    // Calculating the additional deduction for nodes where the opponent worsens its position
+    Value oppWorseningDeduction = (OppWorseningDeductionBase + OppWorseningDeductionIncrement * improving) 
+                                  * oppWorsening * futilityMultiplier / OppWorseningDeductionDenominator;
+
+    // Calculation of the total margin of futility
+    Value totalFutilityMargin = futilityMultiplier * d - improvingDeduction - oppWorseningDeduction;
+
+    return totalFutilityMargin;
 }
 
 // Reductions lookup table initialized at startup
