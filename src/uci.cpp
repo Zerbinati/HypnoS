@@ -73,7 +73,7 @@ UCI::UCI(int argc, char** argv) :
     options["Ponder"] << Option(false);
     options["MultiPV"] << Option(1, 1, MAX_MOVES);
     options["Skill Level"] << Option(20, 0, 20);
-    options["MoveOverhead"] << Option(10, 0, 5000);
+    options["Move Overhead"] << Option(10, 0, 5000);
     options["nodestime"] << Option(0, 0, 10000);
     options["UCI_Chess960"] << Option(false);
     options["UCI_LimitStrength"] << Option(false);
@@ -159,11 +159,16 @@ void UCI::loop() {
             sync_cout << compiler_info() << sync_endl;
         else if (token == "export_net")
         {
-            std::optional<std::string> filename;
-            std::string                f;
-            if (is >> std::skipws >> f)
-                filename = f;
-            networks.big.save(filename);
+            std::pair<std::optional<std::string>, std::string> files[2];
+
+            if (is >> std::skipws >> files[0].second)
+                files[0].first = files[0].second;
+
+            if (is >> std::skipws >> files[1].second)
+                files[1].first = files[1].second;
+
+            networks.big.save(files[0].first);
+            networks.small.save(files[1].first);
         }
         else if (token == "--help" || token == "help" || token == "--license" || token == "license")
             sync_cout
@@ -339,7 +344,13 @@ void UCI::position(Position& pos, std::istringstream& is, StateListPtr& states) 
 }
 
 namespace {
-std::pair<double, double> win_rate_params(const Position& pos) {
+
+struct WinRateParams {
+    double a;
+    double b;
+};
+
+WinRateParams win_rate_params(const Position& pos) {
 
     int material = pos.count<PAWN>() + 3 * pos.count<KNIGHT>() + 3 * pos.count<BISHOP>()
                  + 5 * pos.count<ROOK>() + 9 * pos.count<QUEEN>();
