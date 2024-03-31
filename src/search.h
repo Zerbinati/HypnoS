@@ -54,6 +54,8 @@ struct Stack {
 };
 
 
+extern Stack* ssRoot;
+
 // RootMove struct is used for moves at the root of the tree. For each root move
 // we store a score and a PV (really a refutation in the case of moves which
 // fail low). Score is normally set at -VALUE_INFINITE for all non-pv moves.
