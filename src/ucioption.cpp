@@ -111,8 +111,8 @@ void init(OptionsMap& o) {
     o["EvalFileSmall"]                       << Option(EvalFileDefaultNameSmall, on_eval_file);
     o["Variety"]                             << Option(0, 0, 40);
     o["Variety Max Moves"]                   << Option(0, 0, 255);
-    o["Materialistic Evaluation Strategy"]   << Option(0, -12, 12, on_materialistic_evaluation_strategy);
-    o["Positional Evaluation Strategy"]      << Option(0, -12, 12, on_positional_evaluation_strategy);
+    o["Materialistic Evaluation Strategy"]   << Option(-7, -12, 12, on_materialistic_evaluation_strategy);
+    o["Positional Evaluation Strategy"]      << Option(5, -12, 12, on_positional_evaluation_strategy);
 }
 
 
