@@ -177,9 +177,9 @@ static bool write_parameters(std::ostream& stream, NetSize netSize) {
 }
 
 void hint_common_parent_position(const Position& pos) {
-
-    int simpleEvalAbs = std::abs(simple_eval(pos, pos.side_to_move()));
-    if (simpleEvalAbs > Eval::SmallNetThreshold)
+    int pieceCount    = pos.count<ALL_PIECES>();
+	int simpleEvalAbs = std::abs(simple_eval(pos, pos.side_to_move()));
+    if (simpleEvalAbs > Eval::SmallNetThreshold || (pieceCount <= 5 && simpleEvalAbs > 500))
         featureTransformerSmall->hint_common_access(pos, simpleEvalAbs > Eval::PsqtOnlyThreshold);
     else
         featureTransformerBig->hint_common_access(pos, false);

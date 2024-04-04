@@ -189,8 +189,9 @@ Value Eval::evaluate(const Position& pos) {
 
     assert(!pos.checkers());
 
+    int  pieceCount = pos.count<ALL_PIECES>();
     int  simpleEval = simple_eval(pos, pos.side_to_move());
-    bool smallNet   = std::abs(simpleEval) > SmallNetThreshold;
+    bool smallNet   = std::abs(simpleEval) > SmallNetThreshold || (pieceCount <= 5 && std::abs(simpleEval) > 500);
     bool psqtOnly   = std::abs(simpleEval) > PsqtOnlyThreshold;
     int  nnueComplexity;
     int  v;
