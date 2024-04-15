@@ -1401,6 +1401,12 @@ moves_loop:  // When in check, search starts here
         if (PvNode)
             r--;
 
+        if (   ss->ttPv
+            && !capture
+            && !ss->inCheck
+            && move == ttMove)
+            r++;
+
         // Increase reduction on repetition (~1 Elo)
         if (move == (ss - 4)->currentMove && pos.has_repeated())
             r += 2;
