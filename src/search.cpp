@@ -1398,8 +1398,11 @@ moves_loop:  // When in check, search starts here
             r++;
 
         // Decrease reduction for PvNodes (~0 Elo on STC, ~2 Elo on LTC)
-        if (PvNode)
-            r--;
+        r -= PvNode ? 1 : 0;
+
+        // Apply reduction factor based on the node type and depth
+        if (PvNode && depth >= 4)
+        r -= 1;
 
         // Increase reduction on repetition (~1 Elo)
         if (move == (ss - 4)->currentMove && pos.has_repeated())
