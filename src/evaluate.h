@@ -30,7 +30,7 @@ class Position;
 
 namespace Eval {
 
-constexpr inline int SmallNetThreshold = 1200, PsqtOnlyThreshold = 2430
+constexpr inline int SmallNetThreshold = 1200, PsqtOnlyThreshold = 2430;
 
 std::string trace(Position& pos);
 
