@@ -109,7 +109,7 @@ constexpr Value to_static_eval(const Value v) {
 }
 
 // History and stats update bonus, based on depth
-int stat_bonus(Depth d) { return std::clamp(211 * d - 315, 0, 1291); }
+int stat_bonus(Depth d) { return std::clamp(245 * d - 320, 0, 1296); }
 
 // History and stats update malus, based on depth
 int stat_malus(Depth d) { return (d < 4 ? 572 * d - 285 : 1372); }
@@ -1049,8 +1049,8 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
         return beta > VALUE_TB_LOSS_IN_MAX_PLY ? (eval + beta) / 2 : eval;
 
     // Step 9. Null move search with verification search (~35 Elo)
-    if (!PvNode && (ss - 1)->currentMove != MOVE_NULL && (ss - 1)->statScore < 18001
-	&& eval >= beta && ss->staticEval >= beta - 21 * depth + 315 && !excludedMove
+    if (!PvNode && (ss - 1)->currentMove != MOVE_NULL && (ss - 1)->statScore < 16878
+	&& eval >= beta && ss->staticEval >= beta - 20 * depth + 314 && !excludedMove
 	&& pos.non_pawn_material(us) && ss->ply >= thisThread->nmpMinPly
 	&& beta > VALUE_TB_LOSS_IN_MAX_PLY)
     {
