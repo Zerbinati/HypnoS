@@ -218,11 +218,11 @@ Value Eval::evaluate(const Position& pos) {
     };
 
     if (!smallNet)
-        adjustEval(513, 32395, 919, 11, 145, 1036, 178, 204);
+        adjustEval(520, 33010, 915, 13, 150, 1047, 182, 209);
     else if (psqtOnly)
-        adjustEval(517, 32857, 908, 7, 155, 1019, 224, 238);
+        adjustEval(522, 32865, 915, 7, 161, 1023, 225, 241);
     else
-        adjustEval(499, 32793, 903, 9, 147, 1067, 208, 211);
+        adjustEval(503, 32801, 907, 11, 153, 1073, 214, 216);
 
     // Guarantee evaluation does not hit the tablebase range
     v = std::clamp(int(v), VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
