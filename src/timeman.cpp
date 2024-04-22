@@ -63,8 +63,12 @@ void TimeManagement::init(Search::LimitsType& limits, Color us, int ply) {
         limits.npmsec = npmsec;
     }
 
+    // estimate moves left if movesToGo is default
+    int moveNumber         = (ply % 2 == 0) ? (ply / 2) : std::div(ply, 2).quot + 1;
+    int estimatedMovesLeft = (moveNumber < 50) ? (-0.4 * moveNumber + 50) : 30;
+
     // Maximum move horizon of 50 moves
-    int mtg = limits.movestogo ? std::min(limits.movestogo, 50) : 50;
+    int mtg = limits.movestogo ? std::min(limits.movestogo, 50) : estimatedMovesLeft;
 
     // if less than one second, gradually reduce mtg
     if (limits.time[us] < 1000 && (double(mtg) / limits.time[us] > 0.05))
