@@ -50,6 +50,10 @@
 
 namespace Stockfish {
 
+int xx1=6612, xx2=72;
+TUNE(SetRange(1, 14001), xx1);
+TUNE(SetRange(1, 221), xx2);
+
 namespace Search {
 
 LimitsType Limits;
@@ -1269,7 +1273,7 @@ moves_loop:  // When in check, search starts here
 
                 history += 2 * thisThread->mainHistory[us][from_to(move)];
 
-                lmrDepth += history / 5637;
+                lmrDepth += history / std::max(xx1-(xx2*depth),1);
 
                 Value futilityValue =
                   ss->staticEval + (bestValue < ss->staticEval - 59 ? 141 : 58) + 125 * lmrDepth;
