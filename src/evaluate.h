@@ -26,11 +26,14 @@
 
 namespace Stockfish {
 
+inline int SMALLNET = 1165, PSQTONLY = 2500;
+TUNE(SMALLNET, PSQTONLY);
+
 class Position;
 
 namespace Eval {
 
-constexpr inline int SmallNetThreshold = 1165, PsqtOnlyThreshold = 2500;
+inline int SmallNetThreshold = SMALLNET, PsqtOnlyThreshold = PSQTONLY;
 
 std::string trace(Position& pos);
 

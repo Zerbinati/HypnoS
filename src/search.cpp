@@ -49,6 +49,13 @@
 #include "uci.h"
 
 namespace Stockfish {
+int a1=245, a2=320, a3=1296, a4=554, a5=303, a6=1203, a7=9, a8=12493, a9=132, a10=89;
+    
+	
+
+TUNE(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
+
+TUNE(SetRange(1, 2*a6), a6);
 
 namespace Search {
 
@@ -109,10 +116,10 @@ constexpr Value to_static_eval(const Value v) {
 }
 
 // History and stats update bonus, based on depth
-int stat_bonus(Depth d) { return std::clamp(245 * d - 320, 0, 1296); }
+int stat_bonus(Depth d) { return (d == 1 ? 0 : d < 7 ? a1 * d - a2 : a3); }
 
 // History and stats update malus, based on depth
-int stat_malus(Depth d) { return (d < 4 ? 554 * d - 303 : 1203); }
+int stat_malus(Depth d) { return (d < 4 ? a4 * d - a5 : a6); }
 
 // Add a small random component to draw evaluations to avoid 3-fold blindness
 Value value_draw(const Thread* thisThread) {
@@ -547,12 +554,12 @@ void Thread::search() {
 
             // Reset aspiration window starting size
             Value avg = rootMoves[pvIdx].averageScore;
-            delta     = Value(9) + int(avg) * avg / 12493;
+            delta     = Value(a7) + int(avg) * avg / a8;
             alpha     = std::max(avg - delta, -VALUE_INFINITE);
             beta      = std::min(avg + delta, int(VALUE_INFINITE));
 
             // Adjust optimism based on root move's averageScore (~4 Elo)
-            optimism[us]  = 132 * avg / (std::abs(avg) + 89);
+            optimism[us]  = a9 * avg / (std::abs(avg) + a10);
             optimism[~us] = -optimism[us];
 
             // Start with a small aspiration window and, in the case of a fail
