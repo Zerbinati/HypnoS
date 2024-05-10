@@ -26,9 +26,9 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <string>
 #include <string_view>
 #include <vector>
-#include <string>
 
 #include "misc.h"
 #include "movepick.h"
@@ -37,6 +37,7 @@
 #include "syzygy/tbprobe.h"
 #include "timeman.h"
 #include "types.h"
+#include "nnue/nnue_accumulator.h"
 
 namespace Stockfish {
 
@@ -73,7 +74,6 @@ struct Stack {
     bool            inCheck;
     bool            ttPv;
     bool            ttHit;
-    int             multipleExtensions;
     int             cutoffCnt;
 };
 
@@ -108,8 +108,7 @@ struct RootMove {
 using RootMoves = std::vector<RootMove>;
 
 
-// LimitsType struct stores information sent by GUI about available time to
-// search the current move, maximum depth/time, or if we are in analysis mode.
+// LimitsType struct stores information sent by the caller about the analysis required.
 struct LimitsType {
 
     // Init explicitly due to broken value-initialization of non POD in MSVC
@@ -127,6 +126,7 @@ struct LimitsType {
     int                      movestogo, depth, mate, perft, infinite;
     uint64_t                 nodes;
     bool                     ponderMode;
+    Square                   capSq;
 };
 
 
@@ -275,6 +275,9 @@ class Worker {
         return static_cast<SearchManager*>(manager.get());
     }
 
+    TimePoint elapsed() const;
+    TimePoint elapsed_time() const;
+
     LimitsType limits;
 
     size_t                pvIdx, pvLast;
@@ -303,6 +306,9 @@ class Worker {
     ThreadPool&                 threads;
     TranspositionTable&         tt;
     const Eval::NNUE::Networks& networks;
+
+    // Used by NNUE
+    Eval::NNUE::AccumulatorCaches refreshTable;
 
     friend class Stockfish::ThreadPool;
     friend class SearchManager;

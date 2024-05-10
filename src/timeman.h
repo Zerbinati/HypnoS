@@ -19,7 +19,6 @@
 #ifndef TIMEMAN_H_INCLUDED
 #define TIMEMAN_H_INCLUDED
 
-#include <cstddef>
 #include <cstdint>
 
 #include "misc.h"
@@ -41,7 +40,11 @@ class TimeManagement {
 
     TimePoint optimum() const;
     TimePoint maximum() const;
-    TimePoint elapsed(std::size_t nodes) const;
+    template<typename FUNC>
+    TimePoint elapsed(FUNC nodes) const {
+        return useNodesTime ? TimePoint(nodes()) : elapsed_time();
+    }
+    TimePoint elapsed_time() const { return now() - startTime; };
 
     void clear();
     void advance_nodes_time(std::int64_t nodes);
@@ -51,7 +54,7 @@ class TimeManagement {
     TimePoint optimumTime;
     TimePoint maximumTime;
 
-    std::int64_t availableNodes = 0;      // When in 'nodes as time' mode
+    std::int64_t availableNodes = -1;     // When in 'nodes as time' mode
     bool         useNodesTime   = false;  // True if we are in 'nodes as time' mode
 };
 
