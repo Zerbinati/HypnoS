@@ -170,7 +170,7 @@ constexpr Value VALUE_ZERO     = 0;
 constexpr Value VALUE_DRAW     = 0;
 constexpr Value VALUE_NONE     = 32002;
 constexpr Value VALUE_INFINITE = 32001;
-
+const Value VALUE_KNOWN_WIN = 10000;
 constexpr Value VALUE_MATE             = 32000;
 constexpr Value VALUE_MATE_IN_MAX_PLY  = VALUE_MATE - MAX_PLY;
 constexpr Value VALUE_MATED_IN_MAX_PLY = -VALUE_MATE_IN_MAX_PLY;
@@ -187,7 +187,14 @@ constexpr Value KnightValue = 781;
 constexpr Value BishopValue = 825;
 constexpr Value RookValue   = 1276;
 constexpr Value QueenValue  = 2538;
-
+//from mcts begin
+//constexpr Value HIGH_MCTS        =454;
+//constexpr Value HIGH_MIDDLE_MCTS =400;
+constexpr Value MIDDLE_MCTS = 378;
+//constexpr Value MIDDLE_LOW_MCTS  =336;
+//constexpr Value LOW_MCTS         =310,
+//constexpr Value MIN_MCTS         =25;
+constexpr int NormalizeToPawnValue = 328;
 
 // clang-format off
 enum PieceType {

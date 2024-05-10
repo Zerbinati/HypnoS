@@ -54,6 +54,10 @@ static void on_threads(const Option& o) { Threads.set(size_t(o)); }
 static void on_book1(const Option& o) { Book::on_book(0, (string) o); }
 static void on_book2(const Option& o) { Book::on_book(1, (string) o); }
 static void on_tb_path(const Option& o) { Tablebases::init(o); }
+static void on_HashFile(const Option& o) { TT.set_hash_file_name(o); }
+static void SaveHashtoFile(const Option&) { TT.save(); }
+static void LoadHashfromFile(const Option&) { TT.load(); }
+static void LoadEpdToHash(const Option&) { TT.load_epd_to_hash(); }
 static void on_exp_enabled(const Option& /*o*/) { Experience::init(); }
 static void on_exp_file(const Option& /*o*/) { Experience::init(); }
 static void on_eval_file(const Option&) { Eval::NNUE::init(); }
@@ -77,44 +81,60 @@ void init(OptionsMap& o) {
 
     constexpr int MaxHashMB = Is64Bit ? 33554432 : 2048;
 
-    o["Debug Log File"] << Option("", on_logger);
-    o["Threads"] << Option(1, 1, 1024, on_threads);
-    o["Hash"] << Option(16, 1, MaxHashMB, on_hash_size);
-    o["Clear Hash"] << Option(on_clear_hash);
-    o["Ponder"] << Option(false);
-    o["MultiPV"] << Option(1, 1, 500);
-    o["Skill Level"] << Option(20, 0, 20);
-    o["MoveOverhead"] << Option(10, 0, 5000);
-    o["Minimum Thinking Time"] << Option(100, 0, 5000);
-    o["nodestime"] << Option(0, 0, 10000);
-    o["UCI_Chess960"] << Option(false);
-    o["UCI_LimitStrength"] << Option(false);
-    o["UCI_Elo"] << Option(1320, 1320, 3190);
-    o["UCI_ShowWDL"] << Option(false);
-    o["Book 1 File"] << Option("<empty>", on_book1);
-    o["Book 1 Width"] << Option(1, 1, 20);
-    o["Book 1 Depth"] << Option(255, 1, 255);
-    o["(CTG) Book 1 Only Green"] << Option(true);
-    o["Book 2 File"] << Option("<empty>", on_book2);
-    o["Book 2 Width"] << Option(1, 1, 20);
-    o["Book 2 Depth"] << Option(255, 1, 255);
-    o["(CTG) Book 2 Only Green"] << Option(true);
-    o["SyzygyPath"] << Option("<empty>", on_tb_path);
-    o["SyzygyProbeDepth"] << Option(1, 1, 100);
-    o["Syzygy50MoveRule"] << Option(true);
-    o["SyzygyProbeLimit"] << Option(7, 0, 7);
-    o["Experience Enabled"] << Option(false, on_exp_enabled);
-    o["Experience File"] << Option("Hypnos.exp", on_exp_file);
-    o["Experience Readonly"] << Option(false);
-    o["Experience Book"] << Option(false);
-    o["Experience Book Width"] << Option(1, 1, 20);
-    o["Experience Book Eval Importance"] << Option(5, 0, 10);
-    o["Experience Book Min Depth"] << Option(27, EXP_MIN_DEPTH, 64);
-    o["Experience Book Max Moves"] << Option(100, 1, 100);
-    o["EvalFile"] << Option(EvalFileDefaultNameBig, on_eval_file);
-    o["EvalFileSmall"] << Option(EvalFileDefaultNameSmall, on_eval_file);
-    o["Variety"] << Option(0, 0, 40);
-    o["Variety Max Moves"] << Option(0, 0, 255);
+    o["Debug Log File"]                      << Option("", on_logger);
+    o["Threads"]                             << Option(1, 1, 1024, on_threads);
+    o["Hash"]                                << Option(16, 1, MaxHashMB, on_hash_size);
+    o["Clear Hash"]                          << Option(on_clear_hash);
+    o["Ponder"]                              << Option(false);
+    o["MultiPV"]                             << Option(1, 1, 500);
+    o["Skill Level"]                         << Option(20, 0, 20);
+    o["MoveOverhead"]                        << Option(10, 0, 5000);
+    o["Minimum Thinking Time"]               << Option(100, 0, 5000);
+    o["nodestime"]                           << Option(0, 0, 10000);
+    o["Random Op. Plies"]                    << Option(0, 0, 100);
+    o["Random Op. MultiPV"]                  << Option(1, 1, 500);
+    o["Random Op. Score"]                    << Option(0, 0, 10000);
+    o["UCI_Chess960"]                        << Option(false);
+    o["NeverClearHash"]                      << Option(false);
+    o["HashFile"]                            << Option("Hypnos.hsh", on_HashFile);
+    o["SaveHashtoFile"]                      << Option(SaveHashtoFile);
+    o["LoadHashfromFile"]                    << Option(LoadHashfromFile);
+    o["LoadEpdToHash"]                       << Option(LoadEpdToHash);
+    o["UCI_LimitStrength"]                   << Option(false);
+    o["UCI_Elo"]                             << Option(1320, 1320, 3190);
+    o["UCI_ShowWDL"]                         << Option(false);
+    o["Book 1 File"]                         << Option("<empty>", on_book1);
+    o["Book 1 Width"]                        << Option(1, 1, 20);
+    o["Book 1 Depth"]                        << Option(255, 1, 255);
+    o["(CTG) Book 1 Only Green"]             << Option(true);
+    o["Book 2 File"]                         << Option("<empty>", on_book2);
+    o["Book 2 Width"]                        << Option(1, 1, 20);
+    o["Book 2 Depth"]                        << Option(255, 1, 255);
+    o["(CTG) Book 2 Only Green"]             << Option(true);
+    o["SyzygyPath"]                          << Option("<empty>", on_tb_path);
+    o["SyzygyProbeDepth"]                    << Option(1, 1, 100);
+    o["Syzygy50MoveRule"]                    << Option(true);
+    o["SyzygyProbeLimit"]                    << Option(7, 0, 7);
+    o["Experience Enabled"]                  << Option(true, on_exp_enabled);
+    o["Experience File"]                     << Option("Hypnos.exp", on_exp_file);
+    o["Experience Readonly"]                 << Option(false);
+    o["Experience Book"]                     << Option(false);
+    o["Experience Book Width"]               << Option(1, 1, 20);
+    o["Experience Book Eval Importance"]     << Option(5, 0, 10);
+    o["Experience Book Min Depth"]           << Option(27, EXP_MIN_DEPTH, 64);
+    o["Experience Book Max Moves"]           << Option(100, 1, 100);
+    o["EvalFile"]                            << Option(EvalFileDefaultNameBig, on_eval_file);
+    o["EvalFileSmall"]                       << Option(EvalFileDefaultNameSmall, on_eval_file);
+    o["Variety"]                             << Option(0, 0, 40);
+    o["Variety Max Moves"]                   << Option(0, 0, 255);
+    o["Use MCTS"]                            << Option(false);
+    o["MCTS Threads"]                        << Option(1, 1, 512);
+    o["MCTS Multi Strategy"]                 << Option(20, 0, 100);
+    o["MCTS Multi MinVisits"]                << Option(5, 0, 1000);
+    o["Fluid MultiPV"]                       << Option(false);
+    o["Fmpv Difference"]                     << Option(10, 0, 1000);
+    o["Fmpv Max MultiPV"]                    << Option(4, 2, 8);
+    o["Engine MultiPV"]                      << Option(1, 1, 500);
     o["Materialistic Evaluation Strategy"]
       << Option(0, -12, 12, on_materialistic_evaluation_strategy);
     o["Positional Evaluation Strategy"] << Option(0, -12, 12, on_positional_evaluation_strategy);

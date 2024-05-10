@@ -190,7 +190,9 @@ Value Eval::evaluate(const Position& pos) {
     assert(!pos.checkers());
 
     int  simpleEval = simple_eval(pos, pos.side_to_move());
-    bool smallNet   = std::abs(simpleEval) > SmallNetThreshold;
+    bool simpleEvalIsLarge = std::abs(simpleEval) > SmallNetThreshold;
+    bool kingNotInDanger = !pos.king_danger();
+    bool smallNet = simpleEvalIsLarge && kingNotInDanger;
     bool psqtOnly   = std::abs(simpleEval) > PsqtOnlyThreshold;
     int  nnueComplexity;
     int  v;

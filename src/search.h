@@ -110,6 +110,10 @@ void clear();
 
 }  // namespace Search
 
+Value minimax_value(Position& pos, Search::Stack* ss, Depth depth);
+Value minimax_value(Position& pos, Search::Stack* ss, Depth depth, Value alpha, Value beta);
+//from Montecarlo end
+Value static_value(Position& pos, Search::Stack* ss);
 }  // namespace Stockfish
 
 #endif  // #ifndef SEARCH_H_INCLUDED

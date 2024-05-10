@@ -46,6 +46,7 @@
 #include "thread.h"
 #include "timeman.h"
 #include "tt.h"
+#include "mcts/montecarlo.h"
 #include "uci.h"
 
 namespace Stockfish {
@@ -95,8 +96,11 @@ int Reductions[MAX_MOVES];  // [depth or moveNumber]
 
 Depth reduction(bool i, Depth d, int mn, int delta, int rootDelta) {
     int reductionScale = Reductions[d] * Reductions[mn];
-    return (reductionScale + 1346 - int(delta) * 896 / int(rootDelta)) / 1024
-         + (!i && reductionScale > 880);
+    if (rootDelta != 0)
+        return (reductionScale + 1346 - int(delta) * 896 / int(rootDelta)) / 1024
+             + (!i && reductionScale > 880);
+    else  // avoid divide by zero error
+        return (reductionScale + 1346 - int(delta) * 896) / 1024 + (!i && reductionScale > 880);
 }
 
 constexpr int futility_move_count(bool improving, Depth depth) {
@@ -145,7 +149,7 @@ struct Skill {
 
 int variety;
 
-template<NodeType nodeType>
+template <NodeType nodeType>
 Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode);
 
 template<NodeType nodeType>
@@ -210,10 +214,14 @@ void Search::init() {
 // Resets search state to its initial value
 void Search::clear() {
 
+    if (Options["NeverClearHash"])
+	return;
+
     Threads.main()->wait_for_search_finished();
 
     Time.availableNodes = 0;
     TT.clear();
+    MCTS.clear();
     Threads.clear();
     Tablebases::init(Options["SyzygyPath"]);  // Free mapped files
 
@@ -221,7 +229,26 @@ void Search::clear() {
     Experience::resume_learning();
 }
 
+inline Value static_value(Position& pos, Stack* ss) {
+    // Check if MAX_PLY is reached
+    if (ss->ply >= MAX_PLY)
+        return VALUE_DRAW;
 
+    // Check for immediate draw
+    if (pos.is_draw(ss->ply) && !pos.checkers())
+        return VALUE_DRAW;
+
+    // Detect mate and stalemate situations
+    if (MoveList<LEGAL>(pos).size() == 0)
+        return pos.checkers() ? VALUE_MATE : VALUE_DRAW;
+
+    //Should not call evaluate() if the side to move is under check!
+    if (pos.checkers())
+        return VALUE_DRAW;  //TODO: Not sure if VALUE_DRAW is correct!
+
+    // Evaluate the position statically
+    return evaluate(pos);
+}
 // Called when the program receives the UCI 'go'
 // command. It searches from the root position and outputs the "bestmove".
 void MainThread::search() {
@@ -238,7 +265,10 @@ void MainThread::search() {
 
     Color us = rootPos.side_to_move();
     Time.init(Limits, us, rootPos.game_ply());
+    if (!Limits.infinite)
     TT.new_search();
+    else
+    TT.infinite_search();
 
     Eval::NNUE::verify();
     variety = Options["Variety"];
@@ -349,6 +379,11 @@ void MainThread::search() {
 
         if (think)
         {
+          //Initialize `mctsThreads` threads only once before any thread have begun searching
+          mctsThreads        = size_t(int(Options["MCTS Threads"]));
+          mctsMultiStrategy  = size_t(int(Options["MCTS Multi Strategy"]));
+          mctsMultiMinVisits = double(int(Options["MCTS Multi MinVisits"]));
+
             Threads.start_searching();  // start non-main threads
             Thread::search();           // main thread start searching
         }
@@ -379,9 +414,14 @@ void MainThread::search() {
     Skill   skill =
       Skill(Options["Skill Level"], Options["UCI_LimitStrength"] ? int(Options["UCI_Elo"]) : 0);
 
-    if (int(Options["MultiPV"]) == 1 && !Limits.depth && !Limits.mate && !skill.enabled()
-        && rootMoves[0].pv[0] != MOVE_NONE)
-        bestThread = Threads.get_best_thread();
+  bool useChessBaseMultiPV=Options["Enable Fritz GUI MultiPV"];
+  if (   ((useChessBaseMultiPV && (int(Options["MultiPV"]) == 1))|| (!useChessBaseMultiPV && (int(Options["Engine MultiPV"]) == 1)))
+      && !Limits.depth
+      && !Limits.mate  
+      && !skill.enabled()
+      &&  Threads.size() > 1
+      &&  rootMoves[0].pv[0] != MOVE_NONE)
+      bestThread = Threads.get_best_thread();
 
     if (think && !Experience::is_learning_paused() && !bestThread->rootPos.is_chess960()
         && !(bool) Options["Experience Readonly"] && !(bool) Options["UCI_LimitStrength"]
@@ -500,7 +540,12 @@ void Thread::search() {
                 mainThread->iterValue[i] = mainThread->bestPreviousScore;
     }
 
-    size_t multiPV = size_t(Options["MultiPV"]);
+  bool useChessBaseMultiPV=Options["Enable Fritz GUI MultiPV"];
+  multiPV = (useChessBaseMultiPV)?size_t(Options["MultiPV"]):size_t(Options["Engine MultiPV"]);
+
+    multiPV = std::min(multiPV, rootMoves.size());
+  if (rootPos.game_ply() < int(Options["Random Op. Plies"]))
+      multiPV = int(Options["Random Op. MultiPV"]);
     Skill skill(Options["Skill Level"], Options["UCI_LimitStrength"] ? int(Options["UCI_Elo"]) : 0);
 
     // When playing with strength handicap enable MultiPV search that we will
@@ -509,8 +554,47 @@ void Thread::search() {
         multiPV = std::max(multiPV, size_t(4));
 
     multiPV = std::min(multiPV, rootMoves.size());
-
+    int fmlevel = int(Options["Fmpv Difference"]);
+    int flnumber = int(Options["Fmpv Max MultiPV"]);
     int searchAgainCounter = 0;
+
+    optimism[WHITE] = optimism[BLACK] =
+      VALUE_ZERO;  //Must initialize optimism before calling static_value(). Not sure if 'VALUE_ZERO' is the right value
+
+    bool  maybeDraw    = rootPos.rule50_count() >= 90 || rootPos.has_game_cycle(2);
+    Value rootPosValue = static_value(rootPos, ss);
+    printf("rootPosValue %d",rootPosValue);
+    bool possibleMCTSByValue=true;
+
+    if (!mainThread && bool(Options["Use MCTS"]) && multiPV == 1 && !maybeDraw && possibleMCTSByValue
+        && idx <= (size_t) (mctsThreads) && !Utility::is_game_decided(rootPos, rootPosValue))
+    {
+        MonteCarlo* monteCarlo = new MonteCarlo(rootPos);
+
+        if (monteCarlo)
+        {
+//#if !defined(NDEBUG) && !defined(_NDEBUG)
+            sync_cout << "info string *** Thread[" << idx << "] is running MCTS search"
+                      << sync_endl;
+//#endif
+
+            monteCarlo->search();
+            if (idx == 1 && Limits.infinite && Threads.stop.load(std::memory_order_relaxed))
+                monteCarlo->print_children();
+
+            delete monteCarlo;
+
+//#if !defined(NDEBUG) && !defined(_NDEBUG)
+            sync_cout << "info string *** Thread[" << idx << "] finished MCTS search" << sync_endl;
+//#endif
+
+            return;
+        }
+    }
+
+//#if !defined(NDEBUG) && !defined(_NDEBUG)
+    sync_cout << "info string *** Thread[" << idx << "] is running A/B search" << sync_endl;
+//#endif
 
     // Iterative deepening loop until requested to stop or the target depth is reached
     while (++rootDepth < MAX_PLY && !Threads.stop
@@ -527,6 +611,59 @@ void Thread::search() {
 
         size_t pvFirst = 0;
         pvLast         = 0;
+
+// MultiPV loop. We perform a full root search for each PV line
+Value a1 = rootMoves[0].score + Value(10000) - Value(fmlevel);
+if(a1 == Value(0)){a1 = Value(10000) - Value(fmlevel);}
+Value a2 = rootMoves[1].score + Value(10000);
+if(a2 == Value(0)){a2 = Value(10000);}
+Value a3 = rootMoves[2].score + Value(10000);
+if(a3 == Value(0)){a3 = Value(10000);}
+Value a4 = rootMoves[3].score + Value(10000);
+if(a4 == Value(0)){a4 = Value(10000);}
+Value a5 = rootMoves[4].score + Value(10000);
+if(a5 == Value(0)){a5 = Value(10000);}
+Value a6 = rootMoves[5].score + Value(10000);
+if(a6 == Value(0)){a6 = Value(10000);}
+Value a7 = rootMoves[6].score + Value(10000);
+if(a7 == Value(0)){a7 = Value(10000);}
+Value a8 = rootMoves[7].score + Value(10000);
+if(a8 == Value(0)){a8 = Value(10000);}
+
+if(Options["Engine MultiPV"] == 1 && Options["Fluid MultiPV"]){
+
+if(a1 <= a8 && rootMoves.size() >= 8){
+multiPV = 8;}
+
+else if (a1 > a8 &&  a1 <= a7 && rootMoves.size() >= 7){
+multiPV = 7;}
+
+else if (a1 > a7 &&  a1 <= a6 && rootMoves.size() >= 6){
+multiPV = 6;}
+
+else if (a1 > a6 &&  a1 <= a5 && rootMoves.size() >= 5){
+multiPV = 5;}
+
+else if (a1 > a5 &&  a1 <= a4 && rootMoves.size() >= 4){
+multiPV = 4;}
+
+else if (a1 > a4 &&  a1 <= a3 && rootMoves.size() >= 3){
+multiPV = 3;}
+
+else if (a1 > a3 &&  a1 <= a2 && rootMoves.size() >= 2){
+multiPV = 2;}
+
+else if (a1 <= a2 && rootMoves.size() >= 1){
+multiPV = 1;}
+
+else{multiPV = size_t(Options["Engine MultiPV"]);}
+
+if(multiPV > (size_t)(flnumber)){
+multiPV = (size_t)(flnumber);}
+
+}
+
+fmpv = multiPV;
 
         if (!Threads.increaseDepth)
             searchAgainCounter++;
@@ -545,11 +682,10 @@ void Thread::search() {
             // Reset UCI info selDepth for each depth and each PV line
             selDepth = 0;
 
-            // Reset aspiration window starting size
-            Value avg = rootMoves[pvIdx].averageScore;
-            delta     = Value(9) + int(avg) * avg / 12493;
-            alpha     = std::max(avg - delta, -VALUE_INFINITE);
-            beta      = std::min(avg + delta, int(VALUE_INFINITE));
+            int avg = int(rootMoves[pvIdx].averageScore);
+            delta     = Value(9) + avg * avg / 12493 + 16 * (multiPV > 1);
+            alpha     = std::max(Value(avg) - delta,-VALUE_INFINITE);
+            beta      = std::min(Value(avg) + delta, VALUE_INFINITE);
 
             // Adjust optimism based on root move's averageScore (~4 Elo)
             optimism[us]  = 132 * avg / (std::abs(avg) + 89);
@@ -573,7 +709,8 @@ void Thread::search() {
                 // and we want to keep the same order for all the moves except the
                 // new PV that goes to the front. Note that in the case of MultiPV
                 // search the already searched PV lines are preserved.
-                std::stable_sort(rootMoves.begin() + pvIdx, rootMoves.begin() + pvLast);
+              if (pvIdx + 1 == multiPV)
+                  std::stable_sort(rootMoves.begin() + pvIdx, rootMoves.begin() + pvLast);
 
                 // If search has been stopped, we break immediately. Sorting is
                 // safe because RootMoves is still valid, although it refers to
@@ -691,6 +828,10 @@ void Thread::search() {
         iterIdx                        = (iterIdx + 1) & 3;
     }
 
+#if !defined(NDEBUG) && !defined(_NDEBUG)
+    sync_cout << "info string *** Thread[" << idx << "] finished A/B search" << sync_endl;
+#endif
+
     if (!mainThread)
         return;
 
@@ -700,11 +841,22 @@ void Thread::search() {
     if (skill.enabled())
         std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(),
                                            skill.best ? skill.best : skill.pick_best(multiPV)));
+
+  int maxPV=0;
+  for (unsigned int i=1; i<rootMoves.size(); ++i)
+       if (rootMoves[i].score + PawnValue * int(Options["Random Op. Score"]) / 100 > rootMoves[0].score)
+           maxPV=i;
+  static PRNG rng(now());
+  int iPV;
+  if (maxPV > 0)
+      iPV = rng.rand<unsigned>() % maxPV + 1;
+  else
+      iPV = 0;
+  std::swap(rootMoves[0], rootMoves[iPV]);
 }
 
 
 namespace {
-
 // Main search function for both PV and non-PV nodes
 template<NodeType nodeType>
 Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode) {
@@ -781,7 +933,11 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
             return alpha;
     }
     else
+    {
         thisThread->rootDelta = beta - alpha;
+        if (thisThread->pvIdx > 0 && depth > 3)
+            depth -= 2;
+    }
 
     assert(0 <= ss->ply && ss->ply < MAX_PLY);
 
@@ -806,6 +962,12 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
     // to save indentation, we list the condition in all code between here and there.
     if (!excludedMove)
         ss->ttPv = PvNode || (ss->ttHit && tte->is_pv());
+
+    bool multiTT =    thisThread->pvIdx > 0
+                   && !rootNode
+                   && !(ss->ply & 1)
+                   && (tte->bound() & BOUND_LOWER);
+
 
     //Probe experience data
     const Experience::ExpEntryEx* expEx =
@@ -872,7 +1034,7 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
         thisThread->tbHits.fetch_add(expCount, std::memory_order_relaxed);
 
     // At non-PV nodes we check for an early TT cutoff
-    if (!PvNode && !excludedMove && tte->depth() > depth
+    if ((!PvNode || multiTT) && !excludedMove && tte->depth() > depth
         && ttValue != VALUE_NONE  // Possible in case of TT access race or if !ttHit
         && (tte->bound() & (ttValue >= beta ? BOUND_LOWER : BOUND_UPPER)))
     {
@@ -1202,12 +1364,17 @@ moves_loop:  // When in check, search starts here
         // At root obey the "searchmoves" option and skip moves not listed in Root
         // Move List. In MultiPV mode we also skip PV moves that have been already
         // searched and those of lower "TB rank" if we are in a TB root position.
-        if (rootNode
-            && !std::count(thisThread->rootMoves.begin() + thisThread->pvIdx,
-                           thisThread->rootMoves.begin() + thisThread->pvLast, move))
-            continue;
+      // In MultiPV mode, we search all remaining moves only after the last PV move.
+      if (rootNode)
+      {
+          if (!std::count(thisThread->rootMoves.begin() + thisThread->pvIdx,
+                          thisThread->rootMoves.begin() + thisThread->pvLast, move))
+              continue;
 
-        ss->moveCount = ++moveCount;
+          if (   thisThread->pvIdx + 1 < thisThread->multiPV
+              && move != ttMove)
+              continue;
+      }        ss->moveCount = ++moveCount;
 
         if (rootNode && thisThread == Threads.main() && Time.elapsed() > 3000)
             sync_cout << "info depth " << depth << " currmove "
@@ -1528,8 +1695,9 @@ moves_loop:  // When in check, search starts here
                 // We record how often the best move has been changed in each iteration.
                 // This information is used for time management. In MultiPV mode,
                 // we must take care to only do this for the first PV line.
-                if (moveCount > 1 && !thisThread->pvIdx)
-                    ++thisThread->bestMoveChanges;
+              if (   moveCount > 1 && !thisThread->pvIdx
+                  && thisThread->fmpv == 1)
+                  ++thisThread->bestMoveChanges;
             }
             else
                 // All other moves but the PV, are set to the lowest value: this
@@ -1710,8 +1878,12 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
     ttMove  = ss->ttHit ? tte->move() : MOVE_NONE;
     pvHit   = ss->ttHit && tte->is_pv();
 
+    bool multiTT =    thisThread->pvIdx > 0
+                   && !(ss->ply & 1)
+                   && (tte->bound() & BOUND_LOWER);
+
     // At non-PV nodes we check for an early TT cutoff
-    if (!PvNode && tte->depth() >= ttDepth
+    if ((!PvNode || multiTT) && tte->depth() >= ttDepth
         && ttValue != VALUE_NONE  // Only in case of TT access race or if !ttHit
         && (tte->bound() & (ttValue >= beta ? BOUND_LOWER : BOUND_UPPER)))
         return ttValue;
@@ -2139,6 +2311,102 @@ Move Skill::pick_best(size_t multiPV) {
 
 }  // namespace
 
+//  minimax_value() is a wrapper around the search() and qsearch() functions
+//  used to compute the minimax evaluation of a position at the given depth,
+//  from the point of view of the side to move. It does not compute PV nor
+//  emit anything on the output stream. Note: you can call this function
+//  with depth == DEPTH_ZERO to compute the quiescence value of the position.
+
+Value minimax_value(Position& pos, Search::Stack* ss, Depth depth) {
+
+    //    Threads.stopOnPonderhit = Threads.stop = false;
+    Value alpha = -VALUE_INFINITE;
+    Value beta  = VALUE_INFINITE;
+    Move  pv[MAX_PLY + 1];
+    ss->pv = pv;
+
+    /*   if (pos.should_debug())
+      {
+          debug << "Entering minimax_value() for the following position:" << std::endl;
+          debug << pos << std::endl;
+          hit_any_key();
+      }*/
+
+    Value value = search<PV>(pos, ss, alpha, beta, depth, false);
+
+    // Have we found a "mate in x"?
+    if (Limits.mate && value >= VALUE_MATE_IN_MAX_PLY && VALUE_MATE - value <= 2 * Limits.mate)
+        Threads.stop = true;
+
+    /*    if (pos.should_debug())
+      {
+          debug << pos << std::endl;
+          debug << "... exiting minimax_value() with value = " << value << std::endl;
+          hit_any_key();
+      }
+    */
+    return value;
+}
+
+// minimax_value() is a wrapper around the search() and qsearch() functions
+// used to compute the minimax evaluation of a position at the given depth,
+// from the point of view of the side to move. It does not compute PV nor
+// emit anything on the output stream. Note: you can call this function
+// with depth == DEPTH_ZERO to compute the quiescence value of the position.
+
+Value minimax_value(Position& pos, Search::Stack* ss, Depth depth, Value alpha, Value beta) {
+
+    //    Threads.stopOnPonderhit = Threads.stop = false;
+    //   alpha = -VALUE_INFINITE;
+    //   beta = VALUE_INFINITE;
+    Move pv[MAX_PLY + 1];
+    ss->pv = pv;
+
+    /*   if (pos.should_debug())
+      {
+          debug << "Entering minimax_value() for the following position:" << std::endl;
+          debug << pos << std::endl;
+          hit_any_key();
+      }*/
+    Value value = VALUE_ZERO;
+    Value delta = Value(18);
+
+    while (!Threads.stop.load(std::memory_order_relaxed))
+																			  
+																		
+										
+    {
+        value = search<PV>(pos, ss, alpha, beta, depth, false);
+        if (value <= alpha)
+        {
+            beta  = (alpha + beta) / 2;
+            alpha = std::max(value - delta, -VALUE_INFINITE);
+        }
+        else if (value >= beta)
+        {
+            beta = std::min(value + delta, VALUE_INFINITE);
+            // ++failedHighCnt;
+        }
+        else
+        {
+            //++rootMoves[pvIdx].bestMoveCount;
+            break;
+        }
+    }
+
+    // Have we found a "mate in x"?
+    if (Limits.mate && value >= VALUE_MATE_IN_MAX_PLY && VALUE_MATE - value <= 2 * Limits.mate)
+        Threads.stop = true;
+
+    /*    if (pos.should_debug())
+      {
+          debug << pos << std::endl;
+          debug << "... exiting minimax_value() with value = " << value << std::endl;
+          hit_any_key();
+      }
+    */
+    return value;
+}
 
 // Used to print debug info and, more importantly,
 // to detect when we are out of available time and thus stop the search.
@@ -2180,7 +2448,8 @@ string UCI::pv(const Position& pos, Depth depth) {
     TimePoint         elapsed       = Time.elapsed() + 1;
     const RootMoves&  rootMoves     = pos.this_thread()->rootMoves;
     size_t            pvIdx         = pos.this_thread()->pvIdx;
-    size_t            multiPV       = std::min(size_t(Options["MultiPV"]), rootMoves.size());
+    bool useChessBaseMultiPV=Options["Enable Fritz GUI MultiPV"];
+    size_t multiPV = std::min((useChessBaseMultiPV?(size_t)Options["MultiPV"]:(size_t)Options["Engine MultiPV"]), rootMoves.size());
     uint64_t          nodesSearched = Threads.nodes_searched();
     uint64_t          tbHits        = Threads.tb_hits() + (TB::RootInTB ? rootMoves.size() : 0);
 

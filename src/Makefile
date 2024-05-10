@@ -54,7 +54,7 @@ PGOBENCH = $(WINE_PATH) ./$(EXE) bench
 ### Source and object files
 SRCS = benchmark.cpp bitboard.cpp evaluate.cpp experience.cpp main.cpp \
 	misc.cpp movegen.cpp movepick.cpp position.cpp \
-	search.cpp thread.cpp timeman.cpp tt.cpp uci.cpp ucioption.cpp tune.cpp syzygy/tbprobe.cpp \
+	search.cpp thread.cpp timeman.cpp tt.cpp uci.cpp ucioption.cpp tune.cpp syzygy/tbprobe.cpp mcts/montecarlo.cpp \
 	nnue/evaluate_nnue.cpp nnue/features/half_ka_v2_hm.cpp \
 	book/book.cpp book/polyglot/polyglot.cpp book/ctg/ctg.cpp
 
@@ -65,11 +65,11 @@ HEADERS = benchmark.h bitboard.h evaluate.h misc.h movegen.h movepick.h \
 		nnue/nnue_common.h nnue/nnue_feature_transformer.h position.h \
 		search.h syzygy/tbprobe.h thread.h thread_win32_osx.h timeman.h \
 		tt.h tune.h types.h uci.h \
-		book/book.h book/ctg/ctg.h book/polyglot/polyglot.h
+		book/book.h book/ctg/ctg.h book/polyglot/polyglot.h mcts/montecarlo.h
 
 OBJS = $(notdir $(SRCS:.cpp=.o))
 
-VPATH = syzygy:nnue:nnue/features:book:book/polyglot:book/ctg
+VPATH = mcts:syzygy:nnue:nnue/features:book:book/polyglot:book/ctg
 
 ### ==========================================================================
 ### Section 2. High-level Configuration
