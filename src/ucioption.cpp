@@ -115,7 +115,7 @@ void init(OptionsMap& o) {
     o["SyzygyProbeDepth"]                    << Option(1, 1, 100);
     o["Syzygy50MoveRule"]                    << Option(true);
     o["SyzygyProbeLimit"]                    << Option(7, 0, 7);
-    o["Experience Enabled"]                  << Option(true, on_exp_enabled);
+    o["Experience Enabled"]                  << Option(false, on_exp_enabled);
     o["Experience File"]                     << Option("Hypnos.exp", on_exp_file);
     o["Experience Readonly"]                 << Option(false);
     o["Experience Book"]                     << Option(false);
