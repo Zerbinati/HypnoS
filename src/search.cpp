@@ -46,6 +46,7 @@
 #include "thread.h"
 #include "timeman.h"
 #include "tt.h"
+#include "types.h"
 #include "uci.h"
 
 namespace Stockfish {
@@ -1035,7 +1036,7 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
     // If eval is really low check with qsearch if it can exceed alpha, if it can't,
     // return a fail low.
     // Adjust razor margin according to cutoffCnt. (~1 Elo)
-    if (eval < alpha - 488 - (289 - 142 * ((ss + 1)->cutoffCnt > 3)) * depth * depth)
+    if (eval < alpha - 474 - 324 * depth * depth)
     {
         value = qsearch<NonPV>(pos, ss, alpha - 1, alpha);
         if (value < alpha)
@@ -1061,7 +1062,7 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
         assert(eval - beta >= 0);
 
         // Null move dynamic reduction based on depth and eval
-        Depth R = std::min(int(eval - beta) / 144, 6) + depth / 3 + 4;
+        Depth R = std::min(int(eval - beta) / 144, 6) + depth / 3 + 5;
 
         ss->currentMove         = MOVE_NULL;
         ss->continuationHistory = &thisThread->continuationHistory[0][0][NO_PIECE][0];
@@ -1098,9 +1099,12 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
     if (PvNode && !ttMove)
         depth -= 3;
 
+    if (!PvNode && ss->ttHit && (tte->bound() & BOUND_UPPER) && ttValue > alpha + 5 * depth)
+        depth--;
+
     // Use qsearch if depth <= 0.
     if (depth <= 0)
-        return qsearch<PV>(pos, ss, alpha, beta);
+        return qsearch < PvNode ? PV : NonPV > (pos, ss, alpha, beta);
 
     // For cutNodes without a ttMove, we decrease depth by 2 if depth is high enough.
     if (cutNode && depth >= 8 && (!ttMove || tte->bound() == BOUND_UPPER))
