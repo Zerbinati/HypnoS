@@ -1285,7 +1285,7 @@ void convert_compact_pgn(int argc, char* argv[]) {
         //////////////////////////////////////////////////////////////////
         // Read moves
         int               gamePly = 0;
-        Current::ExpEntry tempExp(0, MOVE_NONE, VALUE_NONE, DEPTH_UNSEARCHED);
+        Current::ExpEntry tempExp(0, MOVE_NONE, VALUE_NONE, DEPTH_NONE);
         vector<char>      tempBuffer;
         for (size_t i = 2; i < tokens.size(); ++i)
         {
@@ -1330,10 +1330,10 @@ void convert_compact_pgn(int argc, char* argv[]) {
                 return false;
             }
 
-            const Depth depth = _depth.empty() ? DEPTH_UNSEARCHED : stoi(_depth);
+            const Depth depth = _depth.empty() ? DEPTH_NONE : stoi(_depth);
             const Value score = _score.empty() ? VALUE_NONE : stoi(_score);
 
-            if (depth != DEPTH_UNSEARCHED && score != VALUE_NONE)
+            if (depth != DEPTH_NONE && score != VALUE_NONE)
             {
                 if (depth >= minDepth && depth <= maxDepth && abs(score) <= maxValue)
                 {

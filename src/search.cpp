@@ -1005,7 +1005,7 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
         ss->staticEval = eval = to_static_eval(newEval);
 
         // Static evaluation is saved as it was before adjustment by correction history
-        tte->save(posKey, VALUE_NONE, ss->ttPv, BOUND_NONE, DEPTH_UNSEARCHED, MOVE_NONE,
+        tte->save(posKey, VALUE_NONE, ss->ttPv, BOUND_NONE, DEPTH_NONE, MOVE_NONE,
                   unadjustedStaticEval);
     }
 
@@ -1760,8 +1760,8 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
             if (std::abs(bestValue) < VALUE_TB_WIN_IN_MAX_PLY && !PvNode)
                 bestValue = (3 * bestValue + beta) / 4;
             if (!ss->ttHit)
-                tte->save(posKey, value_to_tt(bestValue, ss->ply), false, BOUND_LOWER, DEPTH_UNSEARCHED,
-                          DEPTH_UNSEARCHED, , unadjustedStaticEval);
+                tte->save(posKey, value_to_tt(bestValue, ss->ply), false, BOUND_LOWER, DEPTH_NONE,
+                          MOVE_NONE, unadjustedStaticEval);
 
             return bestValue;
         }
