@@ -1006,7 +1006,7 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
         ss->staticEval = eval = to_static_eval(newEval);
 
         // Static evaluation is saved as it was before adjustment by correction history
-        tte->save(posKey, VALUE_NONE, ss->ttPv, BOUND_NONE, DEPTH_NONE, MOVE_NONE,
+        tte->save(posKey, VALUE_NONE, ss->ttPv, BOUND_NONE, DEPTH_UNSEARCHED, MOVE_NONE,
                   unadjustedStaticEval);
     }
 
@@ -1099,14 +1099,12 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
     if (PvNode && !ttMove)
         depth -= 3;
 
-    if (!PvNode && ss->ttHit && (tte->bound() & BOUND_UPPER) && ttValue > alpha + 5 * depth)
-        depth--;
-
     // Use qsearch if depth <= 0.
     if (depth <= 0)
-        return qsearch < PvNode ? PV : NonPV > (pos, ss, alpha, beta);
+        return qsearch<PV>(pos, ss, alpha, beta);
 
-    // For cutNodes without a ttMove, we decrease depth by 2 if depth is high enough.
+    // For cutNodes, if depth is high enough, decrease depth by 2 if there is no ttMove, or
+    // by 1 if there is a ttMove with an upper bound.
     if (cutNode && depth >= 8 && (!ttMove || tte->bound() == BOUND_UPPER))
         depth -= 1 + !ttMove;
 
@@ -1309,11 +1307,14 @@ moves_loop:  // When in check, search starts here
             // then that move is singular and should be extended. To verify this we do
             // a reduced search on the position excluding the ttMove and if the result
             // is lower than ttValue minus a margin, then we will extend the ttMove.
+			// Recursive singular search is avoided.
 
             // Note: the depth margin and singularBeta margin are known for having non-linear
             // scaling. Their values are optimized to time controls of 180+1.8 and longer
             // so changing them requires tests at these types of time controls.
             // Recursive singular search is avoided.
+			// Generally, higher singularBeta (i.e closer to ttValue) and lower extension
+			// margins scale well.
             if (!rootNode && move == ttMove && !excludedMove
                 && depth >= 4 - (thisThread->completedDepth > 30) + ss->ttPv
                 && std::abs(ttValue) < VALUE_TB_WIN_IN_MAX_PLY && (tte->bound() & BOUND_LOWER)
@@ -1331,7 +1332,7 @@ moves_loop:  // When in check, search starts here
                 {
                     int doubleMargin = 251 * PvNode - 241 * !ttCapture;
                     int tripleMargin =
-                      135 + 234 * PvNode - 248 * !ttCapture + 124 * (ss->ttPv || !ttCapture);
+                    int tripleMargin = 135 + 234 * PvNode - 248 * !ttCapture + 124 * ss->ttPv;
                     int quadMargin = 447 + 354 * PvNode - 300 * !ttCapture + 206 * ss->ttPv;
 
                     extension = 1 + (value < singularBeta - doubleMargin)
@@ -1347,12 +1348,8 @@ moves_loop:  // When in check, search starts here
                 // we assume this expected cut-node is not singular (multiple moves fail high),
                 // and we can prune the whole subtree by returning a softbound.
                 else if (singularBeta >= beta)
-                {
-                    if (!ttCapture)
-                        update_quiet_stats(pos, ss, ttMove, -stat_malus(depth));
 
                     return singularBeta;
-                }
 
                 // Negative extensions
                 // If other moves failed high over (ttValue - margin) without the ttMove on a reduced search,
@@ -1398,20 +1395,20 @@ moves_loop:  // When in check, search starts here
         if (ss->ttPv)
             r -= 1 + (ttValue > alpha) + (tte->depth() >= depth);
 
-        else if (cutNode && move != ttMove && move != ss->killers[0])
-            r++;
+        // Decrease reduction for PvNodes (~0 Elo on STC, ~2 Elo on LTC)
+        if (PvNode)
+            r--;
+
+        // These reduction adjustments have no proven non-linear scaling.
 
         // Increase reduction for cut nodes (~4 Elo)
         if (cutNode)
-            r += 2 - (tte->depth() >= depth && ss->ttPv);
+            r += 2 - (tte->depth() >= depth && ss->ttPv)
+               + (!ss->ttPv && move != ttMove && move != ss->killers[0]);
 
         // Increase reduction if ttMove is a capture (~3 Elo)
         if (ttCapture)
             r++;
-
-        // Decrease reduction for PvNodes (~0 Elo on STC, ~2 Elo on LTC)
-        if (PvNode)
-            r--;
 
         // Increase reduction if next ply has a lot of fail high (~5 Elo)
         if ((ss + 1)->cutoffCnt > 3)
@@ -1769,7 +1766,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
                 bestValue = (3 * bestValue + beta) / 4;
             if (!ss->ttHit)
                 tte->save(posKey, value_to_tt(bestValue, ss->ply), false, BOUND_LOWER, DEPTH_NONE,
-                          MOVE_NONE, unadjustedStaticEval);
+                          DEPTH_UNSEARCHED, , unadjustedStaticEval);
 
             return bestValue;
         }
