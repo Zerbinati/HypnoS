@@ -96,8 +96,7 @@ int Reductions[MAX_MOVES];  // [depth or moveNumber]
 
 Depth reduction(bool i, Depth d, int mn, int delta, int rootDelta) {
     int reductionScale = Reductions[d] * Reductions[mn];
-    return (reductionScale + 1346 - int(delta) * 896 / int(rootDelta)) / 1024
-         + (!i && reductionScale > 880);
+    return (reductionScale + 1222 - int(delta) * 733 / int(rootDelta)) / 1024 + (!i && reductionScale > 1231);
 }
 
 constexpr int futility_move_count(bool improving, Depth depth) {
@@ -1345,7 +1344,6 @@ moves_loop:  // When in check, search starts here
                 // we assume this expected cut-node is not singular (multiple moves fail high),
                 // and we can prune the whole subtree by returning a softbound.
                 else if (singularBeta >= beta)
-
                     return singularBeta;
 
                 // Negative extensions
@@ -1847,7 +1845,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
                 continue;
 
             // Do not search moves with bad enough SEE values (~5 Elo)
-            if (!pos.see_ge(move, -78))
+            if (!pos.see_ge(move, -67))
                 continue;
         }
 
