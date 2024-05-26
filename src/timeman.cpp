@@ -39,10 +39,12 @@ void TimeManagement::init(Search::LimitsType& limits, Color us, int ply) {
     // which is used by movetime.
     startTime = limits.startTime;
     if (limits.time[us] == 0)
-    { return; }
+    {
+        return;
+    }
     TimePoint minThinkingTime = TimePoint(Options["Minimum Thinking Time"]);
-    TimePoint moveOverhead    = TimePoint(Options["MoveOverhead"]);
-    TimePoint npmsec          = TimePoint(Options["nodestime"]);
+    TimePoint moveOverhead = TimePoint(Options["MoveOverhead"]);
+    TimePoint npmsec       = TimePoint(Options["nodestime"]);
 
     // optScale is a percentage of available time to use for the current move.
     // maxScale is a multiplier applied to optimumTime.
@@ -68,7 +70,9 @@ void TimeManagement::init(Search::LimitsType& limits, Color us, int ply) {
 
     // if less than one second, gradually reduce mtg
     if (limits.time[us] < 1000 && (double(mtg) / limits.time[us] > 0.05))
-    { mtg = limits.time[us] * 0.05; }
+    {
+        mtg = limits.time[us] * 0.05;
+    }
 
     // Make sure timeLeft is > 0 since we may use it as a divisor
     TimePoint timeLeft = std::max(TimePoint(1), limits.time[us] + limits.inc[us] * (mtg - 1)
@@ -79,11 +83,11 @@ void TimeManagement::init(Search::LimitsType& limits, Color us, int ply) {
     // game time for the current move, so also cap to 20% of available game time.
     if (limits.movestogo == 0)
     {
-        // Use extra time with larger increments
-        double optExtra = limits.inc[us] < 500 ? 1.0 : 1.1;
+    // Use extra time with larger increments
+    double optExtra = std::clamp(1.0 + 12.5 * limits.inc[us] / limits.time[us], 1.0, 1.13);
 
-        // Calculate time constants based on current time left.
-        double optConstant =
+    // Calculate time constants based on current time left.
+    double optConstant =
           std::min(0.00308 + 0.000319 * std::log10(limits.time[us] / 1000.0), 0.00506);
         double maxConstant = std::max(3.39 + 3.01 * std::log10(limits.time[us] / 1000.0), 2.93);
 

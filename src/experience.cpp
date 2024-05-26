@@ -84,7 +84,7 @@ class SugaRKeyMap: public SugaRMap<Stockfish::Key, tVal> {
 template<typename tKey, typename tVal>
 using SugaRMap = unordered_map<tKey, tVal>;
 template<typename tVal>
-using SugaRKeyMap                = SugaRMap<Key, tVal>;
+using SugaRKeyMap = SugaRMap<Key, tVal>;
 #endif
 
 namespace Experience {
@@ -1350,7 +1350,9 @@ void convert_compact_pgn(int argc, char* argv[]) {
                     tempBuffer.insert(tempBuffer.end(), data, data + sizeof(tempExp));
                 }
                 else
-                { ++globalConversionData.numMovesWithScoresIgnored; }
+                {
+                    ++globalConversionData.numMovesWithScoresIgnored;
+                }
 
                 //////////////////////////////////////////////////////////////////
                 //Guess game result and apply sanity checks (we can't trust PGN scores blindly)
@@ -1374,7 +1376,9 @@ void convert_compact_pgn(int argc, char* argv[]) {
                     }
                 }
                 else if (gameData.pos.is_draw(gameData.pos.is_draw(gameData.pos.game_ply())))
-                { gameData.drawDetected = true; }
+                {
+                    gameData.drawDetected = true;
+                }
 
                 //Detect score pattern
                 if (abs(score) >= GOOD_SCORE)
@@ -1409,7 +1413,9 @@ void convert_compact_pgn(int argc, char* argv[]) {
                 }
             }
             else
-            { ++globalConversionData.numMovesWithoutScores; }
+            {
+                ++globalConversionData.numMovesWithoutScores;
+            }
 
             //Do the move
             states->emplace_back();
@@ -1422,11 +1428,15 @@ void convert_compact_pgn(int argc, char* argv[]) {
                 int num_pieces = gameData.pos.count<ALL_PIECES>();
 
                 if (num_pieces == 2)  //KvK
-                { gameData.drawDetected = true; }
+                {
+                    gameData.drawDetected = true;
+                }
                 else if (num_pieces == 3
                          && (gameData.pos.count<BISHOP>() + gameData.pos.count<KNIGHT>())
                               == 1)  //KvK + 1 minor piece
-                { gameData.drawDetected = true; }
+                {
+                    gameData.drawDetected = true;
+                }
                 else if (num_pieces == 4 && gameData.pos.count<BISHOP>(WHITE) == 1
                          && gameData.pos.count<BISHOP>(BLACK)
                               == 1)  //KBvKB, bishops of the same color

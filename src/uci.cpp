@@ -308,12 +308,12 @@ void UCI::loop(int argc, char* argv[]) {
         else if (token == "ucinewgame")
             Search::clear();
         else if (token == "isready")
-        {
-            //Make sure experience has finished loading
-            Experience::wait_for_loading_finished();
+      {
+          //Make sure experience has finished loading
+          Experience::wait_for_loading_finished();
 
-            sync_cout << "readyok" << sync_endl;
-        }
+          sync_cout << "readyok" << sync_endl;
+      }
         // Add custom non-UCI commands, mainly for debugging purposes.
         // These commands must not be used during a search!
         else if (token == "flip")
@@ -329,15 +329,15 @@ void UCI::loop(int argc, char* argv[]) {
         else if (token == "compiler")
             sync_cout << compiler_info() << sync_endl;
         else if (argc > 2 && token == "defrag")
-            Experience::defrag(argc - 2, argv + 2);
+			Experience::defrag(argc - 2, argv + 2);
         else if (argc > 2 && token == "merge")
-            Experience::merge(argc - 2, argv + 2);
+			Experience::merge(argc - 2, argv + 2);
         else if (token == "exp")
-            Experience::show_exp(pos, false);
+			Experience::show_exp(pos, false);
         else if (token == "expex")
-            Experience::show_exp(pos, true);
+			Experience::show_exp(pos, true);
         else if (argc > 2 && token == "convert_compact_pgn")
-            Experience::convert_compact_pgn(argc - 2, argv + 2);
+			Experience::convert_compact_pgn(argc - 2, argv + 2);
         else if (token == "export_net")
         {
             std::optional<std::string> filename;

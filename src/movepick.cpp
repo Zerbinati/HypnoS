@@ -190,8 +190,8 @@ void MovePicker::score() {
             m.value += bool(pos.check_squares(pt) & to) * 16384;
 
             // bonus for escaping from capture
-            m.value += threatenedPieces & from ? (pt == QUEEN && !(to & threatenedByRook)   ? 51700
-                                                  : pt == ROOK && !(to & threatenedByMinor) ? 25600
+            m.value += threatenedPieces & from ? (pt == QUEEN && !(to & threatenedByRook)   ? 51000
+                                                  : pt == ROOK && !(to & threatenedByMinor) ? 24950
                                                   : !(to & threatenedByPawn)                ? 14450
                                                                                             : 0)
                                                : 0;
@@ -200,7 +200,7 @@ void MovePicker::score() {
             m.value -= !(threatenedPieces & from)
                        ? (pt == QUEEN ? bool(to & threatenedByRook) * 48150
                                           + bool(to & threatenedByMinor) * 10650
-                          : pt == ROOK ? bool(to & threatenedByMinor) * 24335
+                          : pt == ROOK ? bool(to & threatenedByMinor) * 24500
                           : pt != PAWN ? bool(to & threatenedByPawn) * 14950
                                        : 0)
                        : 0;
@@ -210,7 +210,7 @@ void MovePicker::score() {
         {
             if (pos.capture_stage(m))
                 m.value =
-                  PieceValue[pos.piece_on(to_sq(m))] - type_of(pos.moved_piece(m)) + (1 << 28);
+        		  PieceValue[pos.piece_on(to_sq(m))] - type_of(pos.moved_piece(m)) + (1 << 28);
             else
                 m.value = (*mainHistory)[pos.side_to_move()][from_to(m)]
                         + (*continuationHistory[0])[pos.moved_piece(m)][to_sq(m)]

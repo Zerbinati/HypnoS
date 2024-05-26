@@ -228,8 +228,7 @@ Value evaluate(const Position& pos, bool adjusted, int* complexity, bool psqtOnl
 
     // Give more value to positional evaluation when adjusted flag is set
     if (adjusted)
-        return static_cast<Value>(((1024 - delta + MaterialisticEvaluationStrategy) * psqt
-                                   + (1024 + delta + PositionalEvaluationStrategy) * positional)
+        return static_cast<Value>(((1024 - delta + MaterialisticEvaluationStrategy) * psqt + (1024 + delta + PositionalEvaluationStrategy) * positional)
                                   / (1024 * OutputScale));
     else
         return static_cast<Value>((psqt + positional) / OutputScale);
@@ -375,18 +374,16 @@ std::string trace(Position& pos) {
                 auto st = pos.state();
 
                 pos.remove_piece(sq);
-                st->accumulatorBig.computed[WHITE]       = st->accumulatorBig.computed[BLACK] =
-                  st->accumulatorBig.computedPSQT[WHITE] = st->accumulatorBig.computedPSQT[BLACK] =
-                    false;
+                st->accumulatorBig.computed[WHITE]     = st->accumulatorBig.computed[BLACK] =
+                st->accumulatorBig.computedPSQT[WHITE] = st->accumulatorBig.computedPSQT[BLACK] = false;
 
                 Value eval = evaluate<NNUE::Big>(pos);
                 eval       = pos.side_to_move() == WHITE ? eval : -eval;
                 v          = base - eval;
 
                 pos.put_piece(pc, sq);
-                st->accumulatorBig.computed[WHITE]       = st->accumulatorBig.computed[BLACK] =
-                  st->accumulatorBig.computedPSQT[WHITE] = st->accumulatorBig.computedPSQT[BLACK] =
-                    false;
+                st->accumulatorBig.computed[WHITE]     = st->accumulatorBig.computed[BLACK] =
+                st->accumulatorBig.computedPSQT[WHITE] = st->accumulatorBig.computedPSQT[BLACK] = false;
             }
 
             writeSquare(f, r, pc, v);

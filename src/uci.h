@@ -63,9 +63,9 @@ class Option {
 
     Option& operator=(const std::string&);
     void    operator<<(const Option&);
-            operator int() const;
-            operator std::string() const;
-    bool    operator==(const char*) const;
+    operator int() const;
+    operator std::string() const;
+    bool operator==(const char*) const;
 
    private:
     friend std::ostream& operator<<(std::ostream&, const OptionsMap&);

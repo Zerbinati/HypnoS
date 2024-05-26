@@ -95,7 +95,9 @@ static void affine_transform_non_ssse3(std::int32_t*       output,
         int32x4_t  sum = {biases[i]};
         const auto row = reinterpret_cast<const int8x16_t*>(&weights[offset]);
         for (IndexType j = 0; j < NumChunks; ++j)
-        { sum = vdotq_s32(sum, inputVector[j], row[j]); }
+        {
+            sum = vdotq_s32(sum, inputVector[j], row[j]);
+        }
         output[i] = vaddvq_s32(sum);
 
         #elif defined(USE_NEON)
@@ -103,9 +105,9 @@ static void affine_transform_non_ssse3(std::int32_t*       output,
         const auto row = reinterpret_cast<const int8x8_t*>(&weights[offset]);
         for (IndexType j = 0; j < NumChunks; ++j)
         {
-                     int16x8_t product = vmull_s8(inputVector[j * 2], row[j * 2]);
-                     product           = vmlal_s8(product, inputVector[j * 2 + 1], row[j * 2 + 1]);
-                     sum               = vpadalq_s16(sum, product);
+            int16x8_t product = vmull_s8(inputVector[j * 2], row[j * 2]);
+            product           = vmlal_s8(product, inputVector[j * 2 + 1], row[j * 2 + 1]);
+            sum               = vpadalq_s16(sum, product);
         }
         output[i] = sum[0] + sum[1] + sum[2] + sum[3];
 

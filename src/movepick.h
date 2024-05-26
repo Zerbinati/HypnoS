@@ -67,7 +67,7 @@ class StatsEntry {
     void operator=(const T& v) { entry = v; }
     T*   operator&() { return &entry; }
     T*   operator->() { return &entry; }
-         operator const T&() const { return entry; }
+    operator const T&() const { return entry; }
 
     void operator<<(int bonus) {
         static_assert(D <= std::numeric_limits<T>::max(), "D overflows T");

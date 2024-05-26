@@ -35,39 +35,38 @@ using namespace Stockfish;
 
 int main(int argc, char* argv[]) {
 
-    Utility::init(argv[0]);
-    SysInfo::init();
-    show_logo();
+  Utility::init(argv[0]);
+  SysInfo::init();
+  show_logo();
 
-    std::cout << engine_info() << std::endl;
+  std::cout << engine_info() << std::endl;
 
-    CommandLine::init(argc, argv);
+  CommandLine::init(argc, argv);
 
-    std::cout << "Operating System (OS) : " << SysInfo::os_info() << std::endl
-              << "CPU Brand             : " << SysInfo::processor_brand() << std::endl
-              << "NUMA Nodes            : " << SysInfo::numa_nodes() << std::endl
-              << "Cores                 : " << SysInfo::physical_cores() << std::endl
-              << "Threads               : " << SysInfo::logical_cores() << std::endl
-              << "Hyper-Threading       : " << SysInfo::is_hyper_threading() << std::endl
-              << "L1/L2/L3 cache size   : " << SysInfo::cache_info(0) << "/"
-              << SysInfo::cache_info(1) << "/" << SysInfo::cache_info(2) << std::endl
-              << "Memory installed (RAM): " << SysInfo::total_memory() << std::endl
-              << std::endl;
+  std::cout
+      << "Operating System (OS) : " << SysInfo::os_info() << std::endl
+      << "CPU Brand             : " << SysInfo::processor_brand() << std::endl
+      << "NUMA Nodes            : " << SysInfo::numa_nodes() << std::endl
+      << "Cores                 : " << SysInfo::physical_cores() << std::endl
+      << "Threads               : " << SysInfo::logical_cores() << std::endl
+      << "Hyper-Threading       : " << SysInfo::is_hyper_threading() << std::endl
+      << "L1/L2/L3 cache size   : " << SysInfo::cache_info(0) << "/" << SysInfo::cache_info(1) << "/" << SysInfo::cache_info(2) << std::endl
+      << "Memory installed (RAM): " << SysInfo::total_memory() << std::endl << std::endl;
 
-    UCI::init(Options);
-    Tune::init();
-    Bitboards::init();
-    Position::init();
-    Experience::init();
-    Threads.set(size_t(Options["Threads"]));
-    Search::clear();  // After threads are up
-    Eval::NNUE::init();
-    Book::init();
+  UCI::init(Options);
+  Tune::init();
+  Bitboards::init();
+  Position::init();
+  Experience::init();
+  Threads.set(size_t(Options["Threads"]));
+  Search::clear(); // After threads are up
+  Eval::NNUE::init();
+  Book::init();
 
-    UCI::loop(argc, argv);
+  UCI::loop(argc, argv);
 
-    Experience::unload();
+  Experience::unload();
 
-    Threads.set(0);
-    return 0;
+  Threads.set(0);
+  return 0;
 }

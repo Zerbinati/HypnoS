@@ -60,9 +60,10 @@ using psqt_vec_t = __m256i;
     #define vec_set_16(a) _mm512_set1_epi16(a)
     #define vec_max_16(a, b) _mm512_max_epi16(a, b)
     #define vec_min_16(a, b) _mm512_min_epi16(a, b)
-    // Inverse permuted at load time
-    #define vec_msb_pack_16(a, b) \
-        _mm512_packs_epi16(_mm512_srli_epi16(a, 7), _mm512_srli_epi16(b, 7))
+inline vec_t vec_msb_pack_16(vec_t a, vec_t b) {
+    vec_t compacted = _mm512_packs_epi16(_mm512_srli_epi16(a, 7), _mm512_srli_epi16(b, 7));
+    return _mm512_permutexvar_epi64(_mm512_setr_epi64(0, 2, 4, 6, 1, 3, 5, 7), compacted);
+}
     #define vec_load_psqt(a) _mm256_load_si256(a)
     #define vec_store_psqt(a, b) _mm256_store_si256(a, b)
     #define vec_add_psqt_32(a, b) _mm256_add_epi32(a, b)
@@ -83,9 +84,10 @@ using psqt_vec_t = __m256i;
     #define vec_set_16(a) _mm256_set1_epi16(a)
     #define vec_max_16(a, b) _mm256_max_epi16(a, b)
     #define vec_min_16(a, b) _mm256_min_epi16(a, b)
-    // Inverse permuted at load time
-    #define vec_msb_pack_16(a, b) \
-        _mm256_packs_epi16(_mm256_srli_epi16(a, 7), _mm256_srli_epi16(b, 7))
+inline vec_t vec_msb_pack_16(vec_t a, vec_t b) {
+    vec_t compacted = _mm256_packs_epi16(_mm256_srli_epi16(a, 7), _mm256_srli_epi16(b, 7));
+    return _mm256_permute4x64_epi64(compacted, 0b11011000);
+}
     #define vec_load_psqt(a) _mm256_load_si256(a)
     #define vec_store_psqt(a, b) _mm256_store_si256(a, b)
     #define vec_add_psqt_32(a, b) _mm256_add_epi32(a, b)
@@ -227,60 +229,6 @@ class FeatureTransformer {
         return FeatureSet::HashValue ^ (OutputDimensions * 2);
     }
 
-    static constexpr void order_packs([[maybe_unused]] uint64_t* v) {
-#if defined(USE_AVX512)  // _mm512_packs_epi16 ordering
-        uint64_t tmp0 = v[2], tmp1 = v[3];
-        v[2] = v[8], v[3] = v[9];
-        v[8] = v[4], v[9] = v[5];
-        v[4] = tmp0, v[5] = tmp1;
-        tmp0 = v[6], tmp1 = v[7];
-        v[6] = v[10], v[7] = v[11];
-        v[10] = v[12], v[11] = v[13];
-        v[12] = tmp0, v[13] = tmp1;
-#elif defined(USE_AVX2)  // _mm256_packs_epi16 ordering
-        std::swap(v[2], v[4]);
-        std::swap(v[3], v[5]);
-#endif
-    }
-
-    static constexpr void inverse_order_packs([[maybe_unused]] uint64_t* v) {
-#if defined(USE_AVX512)  // Inverse _mm512_packs_epi16 ordering
-        uint64_t tmp0 = v[2], tmp1 = v[3];
-        v[2] = v[4], v[3] = v[5];
-        v[4] = v[8], v[5] = v[9];
-        v[8] = tmp0, v[9] = tmp1;
-        tmp0 = v[6], tmp1 = v[7];
-        v[6] = v[12], v[7] = v[13];
-        v[12] = v[10], v[13] = v[11];
-        v[10] = tmp0, v[11] = tmp1;
-#elif defined(USE_AVX2)  // Inverse _mm256_packs_epi16 ordering
-        std::swap(v[2], v[4]);
-        std::swap(v[3], v[5]);
-#endif
-    }
-
-    void permute_weights([[maybe_unused]] void (*order_fn)(uint64_t*)) const {
-#if defined(USE_AVX2)
-    #if defined(USE_AVX512)
-        constexpr IndexType di = 16;
-    #else
-        constexpr IndexType di = 8;
-    #endif
-        uint64_t* b = reinterpret_cast<uint64_t*>(const_cast<BiasType*>(&biases[0]));
-        for (IndexType i = 0; i < HalfDimensions * sizeof(BiasType) / sizeof(uint64_t); i += di)
-            order_fn(&b[i]);
-
-        for (IndexType j = 0; j < InputDimensions; ++j)
-        {
-            uint64_t* w =
-              reinterpret_cast<uint64_t*>(const_cast<WeightType*>(&weights[j * HalfDimensions]));
-            for (IndexType i = 0; i < HalfDimensions * sizeof(WeightType) / sizeof(uint64_t);
-                 i += di)
-                order_fn(&w[i]);
-        }
-#endif
-    }
-
     // Read network parameters
     bool read_parameters(std::istream& stream) {
 
@@ -288,20 +236,16 @@ class FeatureTransformer {
         read_leb_128<WeightType>(stream, weights, HalfDimensions * InputDimensions);
         read_leb_128<PSQTWeightType>(stream, psqtWeights, PSQTBuckets * InputDimensions);
 
-        permute_weights(inverse_order_packs);
         return !stream.fail();
     }
 
     // Write network parameters
     bool write_parameters(std::ostream& stream) const {
 
-        permute_weights(order_packs);
-
         write_leb_128<BiasType>(stream, biases, HalfDimensions);
         write_leb_128<WeightType>(stream, weights, HalfDimensions * InputDimensions);
         write_leb_128<PSQTWeightType>(stream, psqtWeights, PSQTBuckets * InputDimensions);
 
-        permute_weights(inverse_order_packs);
         return !stream.fail();
     }
 
@@ -332,8 +276,8 @@ class FeatureTransformer {
             static_assert((HalfDimensions / 2) % OutputChunkSize == 0);
             constexpr IndexType NumOutputChunks = HalfDimensions / 2 / OutputChunkSize;
 
-            const vec_t Zero = vec_zero();
-            const vec_t One  = vec_set_16(127);
+            vec_t Zero = vec_zero();
+            vec_t One  = vec_set_16(127);
 
             const vec_t* in0 = reinterpret_cast<const vec_t*>(&(accumulation[perspectives[p]][0]));
             const vec_t* in1 =
@@ -399,25 +343,19 @@ class FeatureTransformer {
         return {st, next};
     }
 
-    // NOTE: The parameter states_to_update is an array of position states.
+    // NOTE: The parameter states_to_update is an array of position states, ending with nullptr.
     //       All states must be sequential, that is states_to_update[i] must either be reachable
-    //       by repeatedly applying ->previous from states_to_update[i+1].
+    //       by repeatedly applying ->previous from states_to_update[i+1] or
+    //       states_to_update[i] == nullptr.
     //       computed_st must be reachable by repeatedly applying ->previous on
-    //       states_to_update[0].
+    //       states_to_update[0], if not nullptr.
     template<Color Perspective, size_t N>
     void update_accumulator_incremental(const Position& pos,
                                         StateInfo*      computed_st,
                                         StateInfo*      states_to_update[N],
                                         bool            psqtOnly) const {
         static_assert(N > 0);
-        assert([&]() {
-            for (size_t i = 0; i < N; ++i)
-            {
-                if (states_to_update[i] == nullptr)
-                    return false;
-            }
-            return true;
-        }());
+        assert(states_to_update[N - 1] == nullptr);
 
 #ifdef VECTOR
         // Gcc-10.2 unnecessarily spills AVX2 registers if this array
@@ -426,7 +364,11 @@ class FeatureTransformer {
         psqt_vec_t psqt[NumPsqtRegs];
 #endif
 
+        if (states_to_update[0] == nullptr)
+            return;
+
         // Update incrementally going back through states_to_update.
+
         // Gather all features to be updated.
         const Square ksq = pos.square<KING>(Perspective);
 
@@ -434,18 +376,28 @@ class FeatureTransformer {
         // That might depend on the feature set and generally relies on the
         // feature set's update cost calculation to be correct and never allow
         // updates with more added/removed features than MaxActiveDimensions.
-        FeatureSet::IndexList removed[N], added[N];
+        FeatureSet::IndexList removed[N - 1], added[N - 1];
 
-        for (int i = N - 1; i >= 0; --i)
         {
-            (states_to_update[i]->*accPtr).computed[Perspective]     = !psqtOnly;
-            (states_to_update[i]->*accPtr).computedPSQT[Perspective] = true;
+            int i =
+              N
+              - 2;  // Last potential state to update. Skip last element because it must be nullptr.
+            while (states_to_update[i] == nullptr)
+                --i;
 
-            const StateInfo* end_state = i == 0 ? computed_st : states_to_update[i - 1];
+            StateInfo* st2 = states_to_update[i];
 
-            for (StateInfo* st2 = states_to_update[i]; st2 != end_state; st2 = st2->previous)
-                FeatureSet::append_changed_indices<Perspective>(ksq, st2->dirtyPiece, removed[i],
-                                                                added[i]);
+            for (; i >= 0; --i)
+            {
+                (states_to_update[i]->*accPtr).computed[Perspective]     = !psqtOnly;
+                (states_to_update[i]->*accPtr).computedPSQT[Perspective] = true;
+
+                const StateInfo* end_state = i == 0 ? computed_st : states_to_update[i - 1];
+
+                for (; st2 != end_state; st2 = st2->previous)
+                    FeatureSet::append_changed_indices<Perspective>(ksq, st2->dirtyPiece,
+                                                                    removed[i], added[i]);
+            }
         }
 
         StateInfo* st = computed_st;
@@ -453,7 +405,8 @@ class FeatureTransformer {
         // Now update the accumulators listed in states_to_update[], where the last element is a sentinel.
 #ifdef VECTOR
 
-        if (N == 1 && (removed[0].size() == 1 || removed[0].size() == 2) && added[0].size() == 1)
+        if (states_to_update[1] == nullptr && (removed[0].size() == 1 || removed[0].size() == 2)
+            && added[0].size() == 1)
         {
             assert(states_to_update[0]);
 
@@ -527,7 +480,7 @@ class FeatureTransformer {
                     for (IndexType k = 0; k < NumRegs; ++k)
                         acc[k] = vec_load(&accTileIn[k]);
 
-                    for (IndexType i = 0; i < N; ++i)
+                    for (IndexType i = 0; states_to_update[i]; ++i)
                     {
                         // Difference calculation for the deactivated features
                         for (const auto index : removed[i])
@@ -564,7 +517,7 @@ class FeatureTransformer {
                 for (std::size_t k = 0; k < NumPsqtRegs; ++k)
                     psqt[k] = vec_load_psqt(&accTilePsqtIn[k]);
 
-                for (IndexType i = 0; i < N; ++i)
+                for (IndexType i = 0; states_to_update[i]; ++i)
                 {
                     // Difference calculation for the deactivated features
                     for (const auto index : removed[i])
@@ -594,7 +547,7 @@ class FeatureTransformer {
             }
         }
 #else
-        for (IndexType i = 0; i < N; ++i)
+        for (IndexType i = 0; states_to_update[i]; ++i)
         {
             if (!psqtOnly)
                 std::memcpy((states_to_update[i]->*accPtr).accumulation[Perspective],
@@ -773,8 +726,8 @@ class FeatureTransformer {
             || (psqtOnly && (oldest_st->*accPtr).computedPSQT[Perspective]))
         {
             // Only update current position accumulator to minimize work.
-            StateInfo* states_to_update[1] = {pos.state()};
-            update_accumulator_incremental<Perspective, 1>(pos, oldest_st, states_to_update,
+            StateInfo* states_to_update[2] = {pos.state(), nullptr};
+            update_accumulator_incremental<Perspective, 2>(pos, oldest_st, states_to_update,
                                                            psqtOnly);
         }
         else
@@ -797,20 +750,11 @@ class FeatureTransformer {
             //     1. for the current position
             //     2. the next accumulator after the computed one
             // The heuristic may change in the future.
-            if (next == pos.state())
-            {
-                StateInfo* states_to_update[1] = {next};
+            StateInfo* states_to_update[3] = {next, next == pos.state() ? nullptr : pos.state(),
+                                              nullptr};
 
-                update_accumulator_incremental<Perspective, 1>(pos, oldest_st, states_to_update,
-                                                               psqtOnly);
-            }
-            else
-            {
-                StateInfo* states_to_update[2] = {next, pos.state()};
-
-                update_accumulator_incremental<Perspective, 2>(pos, oldest_st, states_to_update,
-                                                               psqtOnly);
-            }
+            update_accumulator_incremental<Perspective, 3>(pos, oldest_st, states_to_update,
+                                                           psqtOnly);
         }
         else
             update_accumulator_refresh<Perspective>(pos, psqtOnly);
