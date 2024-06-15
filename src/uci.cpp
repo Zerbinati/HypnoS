@@ -30,20 +30,16 @@
 
 #include "benchmark.h"
 #include "engine.h"
-#include "evaluate.h"
 #include "movegen.h"
 #include "position.h"
 #include "score.h"
 #include "search.h"
-#include "syzygy/tbprobe.h"
 #include "types.h"
 #include "ucioption.h"
 
 namespace Stockfish {
 
-constexpr auto StartFEN  = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-constexpr int  MaxHashMB = Is64Bit ? 33554432 : 2048;
-
+constexpr auto StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 template<typename... Ts>
 struct overload: Ts... {
     using Ts::operator()...;
@@ -56,46 +52,25 @@ UCIEngine::UCIEngine(int argc, char** argv) :
     engine(argv[0]),
     cli(argc, argv) {
 
-    auto& options = engine.get_options();
+    engine.get_options().add_info_listener([](const std::optional<std::string>& str) {
+        if (!str || (*str).empty())
+            return;
 
-    options["Debug Log File"] << Option("", [](const Option& o) { start_logger(o); });
+        // split all lines
+        auto ss = std::istringstream{*str};
 
-    options["Threads"] << Option(1, 1, 1024, [this](const Option&) { engine.resize_threads(); });
-
-    options["Hash"] << Option(16, 1, MaxHashMB, [this](const Option& o) { engine.set_tt_size(o); });
-
-    options["Clear Hash"] << Option([this](const Option&) { engine.search_clear(); });
-    options["Ponder"] << Option(false);
-    options["MultiPV"] << Option(1, 1, MAX_MOVES);
-    options["Skill Level"] << Option(20, 0, 20);
-    options["MoveOverhead"] << Option(10, 0, 5000);
-    options["nodestime"] << Option(0, 0, 10000);
-    options["UCI_Chess960"] << Option(false);
-    options["UCI_LimitStrength"] << Option(false);
-    options["UCI_Elo"] << Option(1320, 1320, 3190);
-    options["UCI_ShowWDL"] << Option(false);
-    options["SyzygyPath"] << Option("<empty>", [](const Option& o) { Tablebases::init(o); });
-    options["SyzygyProbeDepth"] << Option(1, 1, 100);
-    options["Syzygy50MoveRule"] << Option(true);
-    options["SyzygyProbeLimit"] << Option(7, 0, 7);
-    options["EvalFile"] << Option(EvalFileDefaultNameBig,
-                                  [this](const Option& o) { engine.load_big_network(o); });
-    options["EvalFileSmall"] << Option(EvalFileDefaultNameSmall,
-                                       [this](const Option& o) { engine.load_small_network(o); });
-
+        for (std::string line; std::getline(ss, line, '\n');)
+            sync_cout << "info string " << line << sync_endl;
+    });
 
     engine.set_on_iter([](const auto& i) { on_iter(i); });
     engine.set_on_update_no_moves([](const auto& i) { on_update_no_moves(i); });
-    engine.set_on_update_full([&](const auto& i) { on_update_full(i, options["UCI_ShowWDL"]); });
+    engine.set_on_update_full(
+      [this](const auto& i) { on_update_full(i, engine.get_options()["UCI_ShowWDL"]); });
     engine.set_on_bestmove([](const auto& bm, const auto& p) { on_bestmove(bm, p); });
-
-    engine.load_networks();
-    engine.resize_threads();
-    engine.search_clear();  // After threads are up
 }
 
 void UCIEngine::loop() {
-
     std::string token, cmd;
 
     for (int i = 1; i < cli.argc; ++i)
@@ -123,8 +98,16 @@ void UCIEngine::loop() {
             engine.set_ponderhit(false);
 
         else if (token == "uci")
+        {
             sync_cout << "id name " << engine_info(true) << "\n"
-                      << engine.get_options() << "\nuciok" << sync_endl;
+                      << engine.get_options() << sync_endl;
+
+            sync_cout << "info string " << engine.numa_config_information_as_string() << sync_endl;
+            sync_cout << "info string " << engine.thread_binding_information_as_string()
+                      << sync_endl;
+
+            sync_cout << "uciok" << sync_endl;
+        }
 
         else if (token == "setoption")
             setoption(is);
@@ -258,7 +241,7 @@ void UCIEngine::bench(std::istream& args) {
                 Search::LimitsType limits = parse_limits(is);
 
                 if (limits.perft)
-                    nodes = perft(limits);
+                    nodesSearched = perft(limits);
                 else
                 {
                     engine.go(limits);
@@ -286,8 +269,9 @@ void UCIEngine::bench(std::istream& args) {
 
     dbg_print();
 
-    std::cerr << "\n==========================="
-              << "\nTotal time (ms) : " << elapsed << "\nNodes searched  : " << nodes
+    std::cerr << "\n==========================="    //
+              << "\nTotal time (ms) : " << elapsed  //
+              << "\nNodes searched  : " << nodes    //
               << "\nNodes/second    : " << 1000 * nodes / elapsed << std::endl;
 
     // reset callback, to not capture a dangling reference to nodesSearched
@@ -344,12 +328,12 @@ WinRateParams win_rate_params(const Position& pos) {
     int material = pos.count<PAWN>() + 3 * pos.count<KNIGHT>() + 3 * pos.count<BISHOP>()
                  + 5 * pos.count<ROOK>() + 9 * pos.count<QUEEN>();
 
-    // The fitted model only uses data for material counts in [10, 78], and is anchored at count 58.
-    double m = std::clamp(material, 10, 78) / 58.0;
+    // The fitted model only uses data for material counts in [17, 78], and is anchored at count 58.
+    double m = std::clamp(material, 17, 78) / 58.0;
 
     // Return a = p_a(material) and b = p_b(material), see github.com/official-stockfish/WDL_model
-    constexpr double as[] = {-150.77043883, 394.96159472, -321.73403766, 406.15850091};
-    constexpr double bs[] = {62.33245393, -91.02264855, 45.88486850, 51.63461272};
+    constexpr double as[] = {-41.25712052, 121.47473115, -124.46958843, 411.84490997};
+    constexpr double bs[] = {84.92998051, -143.66658718, 80.09988253, 49.80869370};
 
     double a = (((as[0] * m + as[1]) * m + as[2]) * m) + as[3];
     double b = (((bs[0] * m + bs[1]) * m + bs[2]) * m) + bs[3];
@@ -390,8 +374,8 @@ std::string UCIEngine::format_score(const Score& s) {
 // without treatment of mate and similar special scores.
 int UCIEngine::to_cp(Value v, const Position& pos) {
 
-    // In general, the score can be defined via the the WDL as
-    // (log(1/L - 1) - log(1/W - 1)) / ((log(1/L - 1) + log(1/W - 1))
+    // In general, the score can be defined via the WDL as
+    // (log(1/L - 1) - log(1/W - 1)) / (log(1/L - 1) + log(1/W - 1)).
     // Based on our win_rate_model, this simply yields v / a.
 
     auto [a, b] = win_rate_params(pos);

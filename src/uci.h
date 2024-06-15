@@ -19,10 +19,10 @@
 #ifndef UCI_H_INCLUDED
 #define UCI_H_INCLUDED
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <string_view>
-#include <cstdint>
 
 #include "engine.h"
 #include "misc.h"
