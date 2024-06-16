@@ -15,6 +15,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 // Definition of layer AffineTransformSparseInput of NNUE evaluation function
 
 #ifndef NNUE_LAYERS_AFFINE_TRANSFORM_SPARSE_INPUT_H_INCLUDED
@@ -234,7 +235,7 @@ class AffineTransformSparseInput {
 
         const auto input32 = reinterpret_cast<const std::int32_t*>(input);
 
-        // Find indices of nonzero 32bit blocks
+        // Find indices of nonzero 32-bit blocks
         find_nnz<NumChunks>(input32, nnz, count);
 
         const outvec_t* biasvec = reinterpret_cast<const outvec_t*>(biases);

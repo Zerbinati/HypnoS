@@ -52,24 +52,22 @@ BINDIR = $(PREFIX)/bin
 PGOBENCH = $(WINE_PATH) ./$(EXE) bench
 
 ### Source and object files
-SRCS = benchmark.cpp bitboard.cpp evaluate.cpp experience.cpp main.cpp \
-	misc.cpp movegen.cpp movepick.cpp position.cpp \
+SRCS = benchmark.cpp bitboard.cpp evaluate.cpp main.cpp \
+	misc.cpp movegen.cpp movepick.cpp polybook.cpp position.cpp \
 	search.cpp thread.cpp timeman.cpp tt.cpp uci.cpp ucioption.cpp tune.cpp syzygy/tbprobe.cpp \
-	nnue/evaluate_nnue.cpp nnue/features/half_ka_v2_hm.cpp \
-	book/book.cpp book/polyglot/polyglot.cpp book/ctg/ctg.cpp
+	nnue/nnue_misc.cpp nnue/features/half_ka_v2_hm.cpp nnue/network.cpp engine.cpp score.cpp memory.cpp
 
 HEADERS = benchmark.h bitboard.h evaluate.h misc.h movegen.h movepick.h \
-		nnue/evaluate_nnue.h nnue/features/half_ka_v2_hm.h nnue/layers/affine_transform.h \
+		nnue/nnue_misc.h nnue/features/half_ka_v2_hm.h nnue/layers/affine_transform.h \
 		nnue/layers/affine_transform_sparse_input.h nnue/layers/clipped_relu.h nnue/layers/simd.h \
 		nnue/layers/sqr_clipped_relu.h nnue/nnue_accumulator.h nnue/nnue_architecture.h \
-		nnue/nnue_common.h nnue/nnue_feature_transformer.h position.h \
+		nnue/nnue_common.h nnue/nnue_feature_transformer.h polybook.h position.h \
 		search.h syzygy/tbprobe.h thread.h thread_win32_osx.h timeman.h \
-		tt.h tune.h types.h uci.h \
-		book/book.h book/ctg/ctg.h book/polyglot/polyglot.h
+		tt.h tune.h types.h uci.h ucioption.h perft.h nnue/network.h engine.h score.h numa.h memory.h
 
 OBJS = $(notdir $(SRCS:.cpp=.o))
 
-VPATH = syzygy:nnue:nnue/features:book:book/polyglot:book/ctg
+VPATH = syzygy:nnue:nnue/features
 
 ### ==========================================================================
 ### Section 2. High-level Configuration
@@ -155,8 +153,8 @@ dotprod = no
 arm_version = 0
 STRIP = strip
 
-ifneq ($(shell which clang-format-17 2> /dev/null),)
-	CLANG-FORMAT = clang-format-17
+ifneq ($(shell which clang-format-18 2> /dev/null),)
+	CLANG-FORMAT = clang-format-18
 else
 	CLANG-FORMAT = clang-format
 endif
@@ -491,8 +489,8 @@ ifeq ($(COMP),clang)
 endif
 
 ifeq ($(KERNEL),Darwin)
-	CXXFLAGS += -mmacosx-version-min=10.14
-	LDFLAGS += -mmacosx-version-min=10.14
+	CXXFLAGS += -mmacosx-version-min=10.15
+	LDFLAGS += -mmacosx-version-min=10.15
 	ifneq ($(arch),any)
 		CXXFLAGS += -arch $(arch)
 		LDFLAGS += -arch $(arch)
@@ -523,6 +521,14 @@ ifeq ($(COMP),ndk)
 			STRIP=llvm-strip
 		endif
 	endif
+	ifeq ($(arch),x86_64)
+		CXX=x86_64-linux-android21-clang++
+		ifneq ($(shell which x86_64-linux-android-strip 2>/dev/null),)
+			STRIP=x86_64-linux-android-strip
+		else
+			STRIP=llvm-strip
+		endif
+	endif
 	LDFLAGS += -static-libstdc++ -pie -lm -latomic
 endif
 
@@ -538,11 +544,6 @@ else
 	ifeq ($(KERNEL),Darwin)
 		EXTRAPROFILEFLAGS = -fvisibility=hidden
 	endif
-endif
-
-### Travis CI script uses COMPILER to overwrite CXX
-ifdef COMPILER
-	COMPCXX=$(COMPILER)
 endif
 
 ### Allow overwriting CXX from command line
@@ -797,7 +798,7 @@ build: config-sanity
 
 help:
 	@echo ""
-	@echo "To compile Hypnos, type: "
+	@echo "To compile hypnos, type: "
 	@echo ""
 	@echo "make -j target [ARCH=arch] [COMP=compiler] [COMPCXX=cxx]"
 	@echo ""
@@ -907,16 +908,16 @@ clean: objclean profileclean
 
 # clean binaries and objects
 objclean:
-	@rm -f hypnos hypnos.exe *.o ./syzygy/*.o ./nnue/*.o ./nnue/features/*.o ./book/*.o ./book/polyglot/*.o ./book/ctg/*.o
+	@rm -f hypnos hypnos.exe *.o ./syzygy/*.o ./nnue/*.o ./nnue/features/*.o
 
 # clean auxiliary profiling files
 profileclean:
 	@rm -rf profdir
-	@rm -f bench.txt *.gcda *.gcno ./syzygy/*.gcda ./nnue/*.gcda ./nnue/features/*.gcda ./book/*.gcda ./book/polyglot/*.gcda ./book/ctg/*.gcda *.s PGOBENCH.out
+	@rm -f bench.txt *.gcda *.gcno ./syzygy/*.gcda ./nnue/*.gcda ./nnue/features/*.gcda *.s PGOBENCH.out
 	@rm -f hypnos.profdata *.profraw
 	@rm -f hypnos.*args*
 	@rm -f hypnos.*lt*
-	@rm -f hypnos.res
+	@rm -f shypnos.res
 	@rm -f ./-lstdc++.res
 
 define fetch_network
@@ -1053,14 +1054,14 @@ FORCE:
 
 clang-profile-make:
 	$(MAKE) ARCH=$(ARCH) COMP=$(COMP) \
-	EXTRACXXFLAGS='-fprofile-instr-generate ' \
-	EXTRALDFLAGS=' -fprofile-instr-generate' \
+	EXTRACXXFLAGS='-fprofile-generate ' \
+	EXTRALDFLAGS=' -fprofile-generate' \
 	all
 
 clang-profile-use:
 	$(XCRUN) llvm-profdata merge -output=hypnos.profdata *.profraw
 	$(MAKE) ARCH=$(ARCH) COMP=$(COMP) \
-	EXTRACXXFLAGS='-fprofile-instr-use=hypnos.profdata' \
+	EXTRACXXFLAGS='-fprofile-use=hypnos.profdata' \
 	EXTRALDFLAGS='-fprofile-use ' \
 	all
 
