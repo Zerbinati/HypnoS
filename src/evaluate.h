@@ -40,8 +40,8 @@ Value evaluate(const Position& pos);
 // The default net name MUST follow the format nn-[SHA256 first 12 digits].nnue
 // for the build process (profile-build and fishtest) to work. Do not change the
 // name of the macro, as it is used in the Makefile.
-// #define EvalFileDefaultNameBig "nn-ae6a388e4a1a.nnue"
-// #define EvalFileDefaultNameSmall "nn-baff1ede1f90.nnue"
+// #define EvalFileDefaultNameBig "nn-ddcfb9224cdb.nnue"
+// #define EvalFileDefaultNameSmall "nn-37f18f62d772.nnue"
 
 namespace NNUE {
 
