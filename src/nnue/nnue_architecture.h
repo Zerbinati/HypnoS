@@ -44,7 +44,7 @@ enum NetSize : int {
 
 // Number of input feature dimensions after conversion
 constexpr IndexType TransformedFeatureDimensionsBig = 3072;
-constexpr int       L2Big                           = 15;
+constexpr int       L2Big                           = 31;
 constexpr int       L3Big                           = 32;
 
 constexpr IndexType TransformedFeatureDimensionsSmall = 128;
