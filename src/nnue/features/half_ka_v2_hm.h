@@ -27,18 +27,18 @@
 #include "../../types.h"
 #include "../nnue_common.h"
 
-namespace Stockfish {
+namespace Hypnos {
 struct StateInfo;
 class Position;
 }
 
-namespace Stockfish::Eval::NNUE::Features {
+namespace Hypnos::Eval::NNUE::Features {
 
-// Feature HalfKAv2_hm: Combination of the position of own king
-// and the position of pieces. Position mirrored such that king always on e..h files.
+// Feature HalfKAv2_hm: Combination of the position of own king and the
+// position of pieces. Position mirrored such that king is always on e..h files.
 class HalfKAv2_hm {
 
-    // unique number for each piece type on each square
+    // Unique number for each piece type on each square
     enum {
         PS_NONE     = 0,
         PS_W_PAWN   = 0,
@@ -56,16 +56,12 @@ class HalfKAv2_hm {
     };
 
     static constexpr IndexType PieceSquareIndex[COLOR_NB][PIECE_NB] = {
-      // convention: W - us, B - them
-      // viewed from other side, W and B are reversed
+      // Convention: W - us, B - them
+      // Viewed from other side, W and B are reversed
       {PS_NONE, PS_W_PAWN, PS_W_KNIGHT, PS_W_BISHOP, PS_W_ROOK, PS_W_QUEEN, PS_KING, PS_NONE,
        PS_NONE, PS_B_PAWN, PS_B_KNIGHT, PS_B_BISHOP, PS_B_ROOK, PS_B_QUEEN, PS_KING, PS_NONE},
       {PS_NONE, PS_B_PAWN, PS_B_KNIGHT, PS_B_BISHOP, PS_B_ROOK, PS_B_QUEEN, PS_KING, PS_NONE,
        PS_NONE, PS_W_PAWN, PS_W_KNIGHT, PS_W_BISHOP, PS_W_ROOK, PS_W_QUEEN, PS_KING, PS_NONE}};
-
-    // Index of a feature for a given king position and another piece on some square
-    template<Color Perspective>
-    static IndexType make_index(Square s, Piece pc, Square ksq);
 
    public:
     // Feature name
@@ -126,6 +122,10 @@ class HalfKAv2_hm {
     static constexpr IndexType MaxActiveDimensions = 32;
     using IndexList                                = ValueList<IndexType, MaxActiveDimensions>;
 
+    // Index of a feature for a given king position and another piece on some square
+    template<Color Perspective>
+    static IndexType make_index(Square s, Piece pc, Square ksq);
+
     // Get a list of indices for active features
     template<Color Perspective>
     static void append_active_indices(const Position& pos, IndexList& active);
@@ -140,11 +140,11 @@ class HalfKAv2_hm {
     static int update_cost(const StateInfo* st);
     static int refresh_cost(const Position& pos);
 
-    // Returns whether the change stored in this StateInfo means that
-    // a full accumulator refresh is required.
+    // Returns whether the change stored in this StateInfo means
+    // that a full accumulator refresh is required.
     static bool requires_refresh(const StateInfo* st, Color perspective);
 };
 
-}  // namespace Stockfish::Eval::NNUE::Features
+}  // namespace Hypnos::Eval::NNUE::Features
 
 #endif  // #ifndef NNUE_FEATURES_HALF_KA_V2_HM_H_INCLUDED

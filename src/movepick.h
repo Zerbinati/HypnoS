@@ -32,7 +32,7 @@
 #include "position.h"
 #include "types.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 constexpr int PAWN_HISTORY_SIZE        = 512;    // has to be a power of 2
 constexpr int CORRECTION_HISTORY_SIZE  = 16384;  // has to be a power of 2
@@ -118,10 +118,6 @@ enum StatsType {
 // see www.chessprogramming.org/Butterfly_Boards (~11 elo)
 using ButterflyHistory = Stats<int16_t, 7183, COLOR_NB, int(SQUARE_NB) * int(SQUARE_NB)>;
 
-// CounterMoveHistory stores counter moves indexed by [piece][to] of the previous
-// move, see www.chessprogramming.org/Countermove_Heuristic
-using CounterMoveHistory = Stats<Move, NOT_USED, PIECE_NB, SQUARE_NB>;
-
 // CapturePieceToHistory is addressed by a move's [piece][to][captured piece type]
 using CapturePieceToHistory = Stats<int16_t, 10692, PIECE_NB, SQUARE_NB, PIECE_TYPE_NB>;
 
@@ -144,7 +140,7 @@ using CorrectionHistory =
 // MovePicker class is used to pick one pseudo-legal move at a time from the
 // current position. The most important method is next_move(), which returns a
 // new pseudo-legal move each time it is called, until there are no moves left,
-// when MOVE_NONE is returned. In order to improve the efficiency of the
+// when Move::none() is returned. In order to improve the efficiency of the
 // alpha-beta algorithm, MovePicker attempts to return the moves which are most
 // likely to get a cut-off first.
 class MovePicker {
@@ -164,7 +160,6 @@ class MovePicker {
                const CapturePieceToHistory*,
                const PieceToHistory**,
                const PawnHistory*,
-               Move,
                const Move*);
     MovePicker(const Position&,
                Move,
@@ -190,13 +185,13 @@ class MovePicker {
     const PieceToHistory**       continuationHistory;
     const PawnHistory*           pawnHistory;
     Move                         ttMove;
-    ExtMove                      refutations[3], *cur, *endMoves, *endBadCaptures;
-    int                          stage;
-    int                          threshold;
-    Depth                        depth;
-    ExtMove                      moves[MAX_MOVES];
+    ExtMove refutations[3], *cur, *endMoves, *endBadCaptures, *beginBadQuiets, *endBadQuiets;
+    int     stage;
+    int     threshold;
+    Depth   depth;
+    ExtMove moves[MAX_MOVES];
 };
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #endif  // #ifndef MOVEPICK_H_INCLUDED

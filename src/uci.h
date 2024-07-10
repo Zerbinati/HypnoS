@@ -19,77 +19,61 @@
 #ifndef UCI_H_INCLUDED
 #define UCI_H_INCLUDED
 
-#include <cstddef>
-#include <iosfwd>
-#include <map>
+#include <cstdint>
+#include <iostream>
 #include <string>
+#include <string_view>
 
-#include "types.h"
+#include "engine.h"
+#include "misc.h"
+#include "search.h"
+#include "book/book_manager.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 class Position;
+class Move;
+class Score;
+enum Square : int;
+using Value = int;
 
-namespace UCI {
-
-// Normalizes the internal value as reported by evaluate or search
-// to the UCI centipawn result used in output. This value is derived from
-// the win_rate_model() such that Stockfish outputs an advantage of
-// "100 centipawns" for a position if the engine has a 50% probability to win
-// from this position in self-play at fishtest LTC time control.
-const int NormalizeToPawnValue = 328;
-
-class Option;
-
-// Define a custom comparator, because the UCI options should be case-insensitive
-struct CaseInsensitiveLess {
-    bool operator()(const std::string&, const std::string&) const;
-};
-
-// The options container is defined as a std::map
-using OptionsMap = std::map<std::string, Option, CaseInsensitiveLess>;
-
-// The Option class implements each option as specified by the UCI protocol
-class Option {
-
-    using OnChange = void (*)(const Option&);
-
+class UCIEngine {
    public:
-    Option(OnChange = nullptr);
-    Option(bool v, OnChange = nullptr);
-    Option(const char* v, OnChange = nullptr);
-    Option(double v, int minv, int maxv, OnChange = nullptr);
-    Option(const char* v, const char* cur, OnChange = nullptr);
+    UCIEngine(int argc, char** argv);
 
-    Option& operator=(const std::string&);
-    void    operator<<(const Option&);
-    operator int() const;
-    operator std::string() const;
-    bool operator==(const char*) const;
+    void loop();
+
+    static int         to_cp(Value v, const Position& pos);
+    static int         getNormalizeToPawnValue(Position& pos);
+    static std::string format_score(const Score& s);
+    static std::string square(Square s);
+    static std::string move(Move m, bool chess960);
+    static std::string wdl(Value v, const Position& pos);
+    static std::string to_lower(std::string str);
+    static Move        to_move(const Position& pos, std::string str);
+
+    static Search::LimitsType parse_limits(std::istream& is);
+
+    auto& engine_options() { return engine.get_options(); }
 
    private:
-    friend std::ostream& operator<<(std::ostream&, const OptionsMap&);
+    Engine      engine;
+    CommandLine cli;
 
-    std::string defaultValue, currentValue, type;
-    int         min, max;
-    size_t      idx;
-    OnChange    on_change;
+    static void print_info_string(const std::string& str);
+
+    void          go(std::istringstream& is);
+    void          bench(std::istream& args);
+    void          position(std::istringstream& is);
+    void          setoption(std::istringstream& is);
+    std::uint64_t perft(const Search::LimitsType&);
+
+    static void on_update_no_moves(const Engine::InfoShort& info);
+    static void on_update_full(const Engine::InfoFull& info, bool showWDL);
+    static void on_iter(const Engine::InfoIter& info);
+    static void on_bestmove(std::string_view bestmove, std::string_view ponder);
 };
 
-void        init(OptionsMap&);
-void        loop(int argc, char* argv[]);
-int         to_cp(Value v);
-std::string value(Value v);
-std::string square(Square s);
-std::string move(Move m, bool chess960);
-std::string pv(const Position& pos, Depth depth);
-std::string wdl(Value v, int ply);
-Move        to_move(const Position& pos, std::string& str);
-
-}  // namespace UCI
-
-extern UCI::OptionsMap Options;
-
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #endif  // #ifndef UCI_H_INCLUDED

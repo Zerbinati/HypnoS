@@ -23,9 +23,9 @@
 #include "../../bitboard.h"
 #include "../../position.h"
 #include "../../types.h"
-#include "../nnue_common.h"
+#include "../nnue_accumulator.h"
 
-namespace Stockfish::Eval::NNUE::Features {
+namespace Hypnos::Eval::NNUE::Features {
 
 // Index of a feature for a given king position and another piece on some square
 template<Color Perspective>
@@ -49,6 +49,8 @@ void HalfKAv2_hm::append_active_indices(const Position& pos, IndexList& active) 
 // Explicit template instantiations
 template void HalfKAv2_hm::append_active_indices<WHITE>(const Position& pos, IndexList& active);
 template void HalfKAv2_hm::append_active_indices<BLACK>(const Position& pos, IndexList& active);
+template IndexType HalfKAv2_hm::make_index<WHITE>(Square s, Piece pc, Square ksq);
+template IndexType HalfKAv2_hm::make_index<BLACK>(Square s, Piece pc, Square ksq);
 
 // Get a list of indices for recently changed features
 template<Color Perspective>
@@ -83,4 +85,4 @@ bool HalfKAv2_hm::requires_refresh(const StateInfo* st, Color perspective) {
     return st->dirtyPiece.piece[0] == make_piece(perspective, KING);
 }
 
-}  // namespace Stockfish::Eval::NNUE::Features
+}  // namespace Hypnos::Eval::NNUE::Features

@@ -24,7 +24,7 @@
 
 #include "types.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 class Position;
 
@@ -37,12 +37,10 @@ enum GenType {
     LEGAL
 };
 
-struct ExtMove {
-    Move move;
-    int  value;
+struct ExtMove: public Move {
+    int value;
 
-    operator Move() const { return move; }
-    void operator=(Move m) { move = m; }
+    void operator=(Move m) { data = m.raw(); }
 
     // Inhibit unwanted implicit conversions to Move
     // with an ambiguity that yields to a compile error.
@@ -71,6 +69,6 @@ struct MoveList {
     ExtMove moveList[MAX_MOVES], *last;
 };
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #endif  // #ifndef MOVEGEN_H_INCLUDED

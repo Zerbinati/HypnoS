@@ -16,8 +16,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef STOCKFISH_SIMD_H_INCLUDED
-#define STOCKFISH_SIMD_H_INCLUDED
+#ifndef BRAINLEARN_SIMD_H_INCLUDED
+#define BRAINLEARN_SIMD_H_INCLUDED
 
 #if defined(USE_AVX2)
     #include <immintrin.h>
@@ -35,45 +35,12 @@
     #include <arm_neon.h>
 #endif
 
-namespace Stockfish::Simd {
+namespace Hypnos::Simd {
 
 #if defined(USE_AVX512)
 
 [[maybe_unused]] static int m512_hadd(__m512i sum, int bias) {
     return _mm512_reduce_add_epi32(sum) + bias;
-}
-
-/*
-      Parameters:
-        sum0 = [zmm0.i128[0], zmm0.i128[1], zmm0.i128[2], zmm0.i128[3]]
-        sum1 = [zmm1.i128[0], zmm1.i128[1], zmm1.i128[2], zmm1.i128[3]]
-        sum2 = [zmm2.i128[0], zmm2.i128[1], zmm2.i128[2], zmm2.i128[3]]
-        sum3 = [zmm3.i128[0], zmm3.i128[1], zmm3.i128[2], zmm3.i128[3]]
-
-      Returns:
-        ret = [
-          reduce_add_epi32(zmm0.i128[0]), reduce_add_epi32(zmm1.i128[0]), reduce_add_epi32(zmm2.i128[0]), reduce_add_epi32(zmm3.i128[0]),
-          reduce_add_epi32(zmm0.i128[1]), reduce_add_epi32(zmm1.i128[1]), reduce_add_epi32(zmm2.i128[1]), reduce_add_epi32(zmm3.i128[1]),
-          reduce_add_epi32(zmm0.i128[2]), reduce_add_epi32(zmm1.i128[2]), reduce_add_epi32(zmm2.i128[2]), reduce_add_epi32(zmm3.i128[2]),
-          reduce_add_epi32(zmm0.i128[3]), reduce_add_epi32(zmm1.i128[3]), reduce_add_epi32(zmm2.i128[3]), reduce_add_epi32(zmm3.i128[3])
-        ]
-    */
-[[maybe_unused]] static __m512i
-m512_hadd128x16_interleave(__m512i sum0, __m512i sum1, __m512i sum2, __m512i sum3) {
-
-    __m512i sum01a = _mm512_unpacklo_epi32(sum0, sum1);
-    __m512i sum01b = _mm512_unpackhi_epi32(sum0, sum1);
-
-    __m512i sum23a = _mm512_unpacklo_epi32(sum2, sum3);
-    __m512i sum23b = _mm512_unpackhi_epi32(sum2, sum3);
-
-    __m512i sum01 = _mm512_add_epi32(sum01a, sum01b);
-    __m512i sum23 = _mm512_add_epi32(sum23a, sum23b);
-
-    __m512i sum0123a = _mm512_unpacklo_epi64(sum01, sum23);
-    __m512i sum0123b = _mm512_unpackhi_epi64(sum01, sum23);
-
-    return _mm512_add_epi32(sum0123a, sum0123b);
 }
 
 [[maybe_unused]] static void m512_add_dpbusd_epi32(__m512i& acc, __m512i a, __m512i b) {
@@ -164,4 +131,4 @@ dotprod_m128_add_dpbusd_epi32(int32x4_t& acc, int8x16_t a, int8x16_t b) {
 #endif
 }
 
-#endif  // STOCKFISH_SIMD_H_INCLUDED
+#endif  // HYPNOS_SIMD_H_INCLUDED

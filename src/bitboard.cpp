@@ -24,7 +24,7 @@
 
 #include "misc.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 uint8_t PopCnt16[1 << 16];
 uint8_t SquareDistance[SQUARE_NB][SQUARE_NB];
@@ -44,15 +44,13 @@ Bitboard BishopTable[0x1480];  // To store bishop attacks
 
 void init_magics(PieceType pt, Bitboard table[], Magic magics[]);
 
-}
-
 // Returns the bitboard of target square for the given step
 // from the given square. If the step is off the board, returns empty bitboard.
-inline Bitboard safe_destination(Square s, int step) {
+Bitboard safe_destination(Square s, int step) {
     Square to = Square(s + step);
     return is_ok(to) && distance(s, to) <= 2 ? square_bb(to) : Bitboard(0);
 }
-
+}
 
 // Returns an ASCII representation of a bitboard suitable
 // to be printed to standard output. Useful for debugging.
@@ -126,8 +124,14 @@ Bitboard sliding_attack(PieceType pt, Square sq, Bitboard occupied) {
     for (Direction d : (pt == ROOK ? RookDirections : BishopDirections))
     {
         Square s = sq;
-        while (safe_destination(s, d) && !(occupied & s))
+        while (safe_destination(s, d))
+        {
             attacks |= (s += d);
+            if (occupied & s)
+            {
+                break;
+            }
+        }
     }
 
     return attacks;
@@ -215,4 +219,4 @@ void init_magics(PieceType pt, Bitboard table[], Magic magics[]) {
 }
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos

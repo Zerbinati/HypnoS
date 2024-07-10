@@ -26,7 +26,9 @@
 #include <utility>
 #include <vector>
 
-namespace Stockfish {
+namespace Hypnos {
+
+class OptionsMap;
 
 using Range    = std::pair<int, int>;  // Option's min-max values
 using RangeFun = Range(int);
@@ -143,6 +145,8 @@ class Tune {
         return add(value, (next(names), std::move(names)), args...);
     }
 
+    static void make_option(OptionsMap* options, const std::string& n, int v, const SetRange& r);
+
     std::vector<std::unique_ptr<EntryBase>> list;
 
    public:
@@ -151,16 +155,19 @@ class Tune {
         return instance().add(SetDefaultRange, names.substr(1, names.size() - 2),
                               args...);  // Remove trailing parenthesis
     }
-    static void init() {
+    static void init(OptionsMap& o) {
+        options = &o;
         for (auto& e : instance().list)
             e->init_option();
         read_options();
-    }  // Deferred, due to UCI::Options access
+    }  // Deferred, due to UCIEngine::Options access
     static void read_options() {
         for (auto& e : instance().list)
             e->read_option();
     }
-    static bool update_on_last;
+
+    static bool        update_on_last;
+    static OptionsMap* options;
 };
 
 // Some macro magic :-) we define a dummy int variable that the compiler initializes calling Tune::add()
@@ -171,6 +178,6 @@ class Tune {
 
 #define UPDATE_ON_LAST() bool UNIQUE(p, __LINE__) = Tune::update_on_last = true
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #endif  // #ifndef TUNE_H_INCLUDED
