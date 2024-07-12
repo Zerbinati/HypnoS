@@ -1032,7 +1032,7 @@ Value Search::Worker::search(
              >= beta
         && eval >= beta && (!ttData.move || ttCapture) && beta > VALUE_TB_LOSS_IN_MAX_PLY
         && eval < VALUE_TB_WIN_IN_MAX_PLY)
-        return beta + (eval - beta) / 3;
+        return beta + (eval - beta) / 4;
 
     // Step 9. Null move search with verification search (~35 Elo)
     if (!PvNode && !disableNMAndPC
