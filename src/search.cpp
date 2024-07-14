@@ -137,7 +137,7 @@ struct Skill {
     }
     bool enabled() const { return level < 20.0; }
     bool time_to_pick(Depth depth) const { return depth == 1 + int(level); }
-    Move pick_best(size_t multiPV);
+    Move pick_best(size_t multiPv);
 
     double level;
     Move   best = MOVE_NONE;
@@ -379,7 +379,7 @@ void MainThread::search() {
     Skill   skill =
       Skill(Options["Skill Level"], Options["UCI_LimitStrength"] ? int(Options["UCI_Elo"]) : 0);
 
-    if (int(Options["MultiPV"]) == 1 && !Limits.depth && !Limits.mate && !skill.enabled()
+    if (int(Options["MultiPv"]) == 1 && !Limits.depth && !Limits.mate && !skill.enabled()
         && rootMoves[0].pv[0] != MOVE_NONE)
         bestThread = Threads.get_best_thread();
 
@@ -507,15 +507,16 @@ void Thread::search() {
                 mainThread->iterValue[i] = mainThread->bestPreviousScore;
     }
 
-    size_t multiPV = size_t(Options["MultiPV"]);
+    smartMultiPvMode = Options["SmartMultiPVMode"];
+    size_t multiPv = size_t(Options["MultiPV"]);
     Skill skill(Options["Skill Level"], Options["UCI_LimitStrength"] ? int(Options["UCI_Elo"]) : 0);
 
     // When playing with strength handicap enable MultiPV search that we will
     // use behind-the-scenes to retrieve a set of possible moves.
     if (skill.enabled())
-        multiPV = std::max(multiPV, size_t(4));
+        multiPv = std::max(multiPv, size_t(4));
 
-    multiPV = std::min(multiPV, rootMoves.size());
+    multiPv = std::min(multiPv, rootMoves.size());
 
     int searchAgainCounter = 0;
 
@@ -539,7 +540,7 @@ void Thread::search() {
             searchAgainCounter++;
 
         // MultiPV loop. We perform a full root search for each PV line
-        for (pvIdx = 0; pvIdx < multiPV && !Threads.stop; ++pvIdx)
+        for (pvIdx = 0; pvIdx < multiPv && !Threads.stop; ++pvIdx)
         {
             if (pvIdx == pvLast)
             {
@@ -580,7 +581,13 @@ void Thread::search() {
                 // and we want to keep the same order for all the moves except the
                 // new PV that goes to the front. Note that in the case of MultiPV
                 // search the already searched PV lines are preserved.
-                std::stable_sort(rootMoves.begin() + pvIdx, rootMoves.begin() + pvLast);
+                if (smartMultiPvMode)
+                {
+                    if (pvIdx + 1 == multiPv)
+                        std::stable_sort(rootMoves.begin() + pvIdx, rootMoves.begin() + pvLast);
+                }
+                else
+                    std::stable_sort(rootMoves.begin() + pvIdx, rootMoves.begin() + pvLast);
 
                 // If search has been stopped, we break immediately. Sorting is
                 // safe because RootMoves is still valid, although it refers to
@@ -590,7 +597,7 @@ void Thread::search() {
 
                 // When failing high/low give some update (without cluttering
                 // the UI) before a re-search.
-                if (mainThread && multiPV == 1 && (bestValue <= alpha || bestValue >= beta)
+                if (mainThread && multiPv == 1 && (bestValue <= alpha || bestValue >= beta)
                     && Time.elapsed() > 3000)
                     sync_cout << UCI::pv(rootPos, rootDepth) << sync_endl;
 
@@ -621,7 +628,7 @@ void Thread::search() {
             // Sort the PV lines searched so far and update the GUI
             std::stable_sort(rootMoves.begin() + pvFirst, rootMoves.begin() + pvIdx + 1);
 
-            if (mainThread && (Threads.stop || pvIdx + 1 == multiPV || Time.elapsed() > 3000))
+            if (mainThread && (Threads.stop || pvIdx + 1 == multiPv || Time.elapsed() > 3000))
                 sync_cout << UCI::pv(rootPos, rootDepth) << sync_endl;
         }
 
@@ -648,7 +655,7 @@ void Thread::search() {
 
         // If the skill level is enabled and time is up, pick a sub-optimal best move
         if (skill.enabled() && skill.time_to_pick(rootDepth))
-            skill.pick_best(multiPV);
+            skill.pick_best(multiPv);
 
         // Use part of the gained time from a previous stable move for the current move
         for (Thread* th : Threads)
@@ -705,7 +712,7 @@ void Thread::search() {
     // If the skill level is enabled, swap the best PV line with the sub-optimal one
     if (skill.enabled())
         std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(),
-                                           skill.best ? skill.best : skill.pick_best(multiPV)));
+                                           skill.best ? skill.best : skill.pick_best(multiPv)));
 }
 
 
@@ -1210,10 +1217,19 @@ moves_loop:  // When in check, search starts here
         // At root obey the "searchmoves" option and skip moves not listed in Root
         // Move List. In MultiPV mode we also skip PV moves that have been already
         // searched and those of lower "TB rank" if we are in a TB root position.
-        if (rootNode
-            && !std::count(thisThread->rootMoves.begin() + thisThread->pvIdx,
-                           thisThread->rootMoves.begin() + thisThread->pvLast, move))
-            continue;
+        if (rootNode)
+        {
+            if (!std::count(thisThread->rootMoves.begin() + thisThread->pvIdx,
+                            thisThread->rootMoves.begin() + thisThread->pvLast, move))
+                continue;
+
+            // In SmartMultiPVMode, we search all remaining moves only after
+            // the last PV line.
+            if (   thisThread->smartMultiPvMode
+                && thisThread->pvIdx + 1 < thisThread->multiPv
+                && move != thisThread->rootMoves[thisThread->pvIdx].pv[0])
+                continue;
+        }
 
         ss->moveCount = ++moveCount;
 

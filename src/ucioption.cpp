@@ -111,6 +111,7 @@ void init(OptionsMap& o) {
     o["Experience Book Eval Importance"] << Option(5, 0, 10);
     o["Experience Book Min Depth"] << Option(27, EXP_MIN_DEPTH, 64);
     o["Experience Book Max Moves"] << Option(100, 1, 100);
+	o["SmartMultiPVMode"] << Option(false);
     o["EvalFile"] << Option(EvalFileDefaultNameBig, on_eval_file);
     o["EvalFileSmall"] << Option(EvalFileDefaultNameSmall, on_eval_file);
     o["Variety"] << Option(0, 0, 40);
