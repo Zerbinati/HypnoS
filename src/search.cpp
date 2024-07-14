@@ -508,7 +508,7 @@ void Thread::search() {
     }
 
     smartMultiPvMode = Options["SmartMultiPVMode"];
-    size_t multiPv = size_t(Options["MultiPV"]);
+    multiPv = size_t(Options["MultiPV"]);
     Skill skill(Options["Skill Level"], Options["UCI_LimitStrength"] ? int(Options["UCI_Elo"]) : 0);
 
     // When playing with strength handicap enable MultiPV search that we will
