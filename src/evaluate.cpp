@@ -212,6 +212,9 @@ Value Eval::evaluate(const Position& pos) {
              + optimism * (npmConstant + npm))
           / evalDiv;
 
+        // Evaluation grain (to get more alpha-beta cuts) with randomization (for robustness)
+        v = (v / 16) * 16 - 1 + (pos.key() & 0x2);
+
         // Damp down the evaluation linearly when shuffling
         int shuffling = pos.rule50_count();
         v             = v * (shufflingConstant - shuffling) / shufflingDiv;
