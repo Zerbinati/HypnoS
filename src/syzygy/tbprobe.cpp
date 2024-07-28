@@ -56,11 +56,11 @@
     #include <windows.h>
 #endif
 
-using namespace Stockfish::Tablebases;
+using namespace Hypnos::Tablebases;
 
-int Stockfish::Tablebases::MaxCardinality;
+int Hypnos::Tablebases::MaxCardinality;
 
-namespace Stockfish {
+namespace Hypnos {
 
 namespace {
 
@@ -1682,4 +1682,4 @@ bool Tablebases::root_probe_wdl(Position& pos, Search::RootMoves& rootMoves) {
     return true;
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos

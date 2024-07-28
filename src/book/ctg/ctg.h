@@ -12,7 +12,7 @@ namespace
 	struct CtgMoveStats;
 }
 
-namespace Stockfish::Book::CTG
+namespace Hypnos::Book::CTG
 {
 	class CtgBook : public Book
 	{

@@ -20,7 +20,7 @@
 #define EXPERIENCE_H_INCLUDED
 
 using namespace std;
-using namespace Stockfish;
+using namespace Hypnos;
 
 constexpr inline Depth EXP_MIN_DEPTH = 4;
 

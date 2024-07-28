@@ -44,7 +44,7 @@
 #include "search.h"
 #include "thread.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 namespace {
 
@@ -348,9 +348,9 @@ void UCI::loop(int argc, char* argv[]) {
         }
         else if (token == "--help" || token == "help" || token == "--license" || token == "license")
             sync_cout
-              << "\nStockfish is a powerful chess engine for playing and analyzing."
+              << "\nHypnos is a powerful chess engine for playing and analyzing."
                  "\nIt is released as free software licensed under the GNU GPLv3 License."
-                 "\nStockfish is normally used with a graphical user interface (GUI) and implements"
+                 "\nHypnos is normally used with a graphical user interface (GUI) and implements"
                  "\nthe Universal Chess Interface (UCI) protocol to communicate with a GUI, an API, etc."
                  "\nFor any further information, visit https://github.com/official-stockfish/Stockfish#readme"
                  "\nor read the corresponding README.md and Copying.txt files distributed along with this program.\n"
@@ -454,4 +454,4 @@ Move UCI::to_move(const Position& pos, std::string& str) {
     return MOVE_NONE;
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos

@@ -40,7 +40,7 @@
 
 using std::string;
 
-namespace Stockfish {
+namespace Hypnos {
 
 UCI::OptionsMap Options;  // Global object
 
@@ -54,6 +54,9 @@ static void on_threads(const Option& o) { Threads.set(size_t(o)); }
 static void on_book1(const Option& o) { Book::on_book(0, (string) o); }
 static void on_book2(const Option& o) { Book::on_book(1, (string) o); }
 static void on_tb_path(const Option& o) { Tablebases::init(o); }
+static void on_HashFile(const Option& o) { TT.set_hash_file_name(o); }
+static void SaveHashtoFile(const Option&) { TT.save(); }
+static void LoadHashfromFile(const Option&) { TT.load(); }
 static void on_exp_enabled(const Option& /*o*/) { Experience::init(); }
 static void on_exp_file(const Option& /*o*/) { Experience::init(); }
 static void on_eval_file(const Option&) { Eval::NNUE::init(); }
@@ -88,6 +91,10 @@ void init(OptionsMap& o) {
     o["Minimum Thinking Time"] << Option(100, 0, 5000);
     o["nodestime"] << Option(0, 0, 10000);
     o["UCI_Chess960"] << Option(false);
+    o["NeverClearHash"] << Option(false);
+    o["HashFile"] << Option("Hypnos.hsh", on_HashFile);
+    o["SaveHashtoFile"] << Option(SaveHashtoFile);
+    o["LoadHashfromFile"] << Option(LoadHashfromFile);
     o["UCI_LimitStrength"] << Option(false);
     o["UCI_Elo"] << Option(1320, 1320, 3190);
     o["UCI_ShowWDL"] << Option(false);
@@ -249,4 +256,4 @@ Option& Option::operator=(const string& v) {
 
 }  // namespace UCI
 
-}  // namespace Stockfish
+}  // namespace Hypnos

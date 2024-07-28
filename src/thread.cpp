@@ -36,7 +36,7 @@
 #include "tt.h"
 #include "uci.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 ThreadPool Threads;  // Global object
 
@@ -275,4 +275,4 @@ void ThreadPool::wait_for_search_finished() const {
             th->wait_for_search_finished();
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos

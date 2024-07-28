@@ -30,7 +30,7 @@
 #include "nnue/nnue_architecture.h"
 #include "types.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 // StateInfo struct stores information needed to restore a Position object to
 // its previous state when we retract a move. Whenever a move is made on the
@@ -365,6 +365,6 @@ inline void Position::do_move(Move m, StateInfo& newSt) { do_move(m, newSt, give
 
 inline StateInfo* Position::state() const { return st; }
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #endif  // #ifndef POSITION_H_INCLUDED

@@ -32,7 +32,7 @@
 #include "position.h"
 #include "types.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 constexpr int PAWN_HISTORY_SIZE        = 512;    // has to be a power of 2
 constexpr int CORRECTION_HISTORY_SIZE  = 16384;  // has to be a power of 2
@@ -197,6 +197,6 @@ class MovePicker {
     ExtMove                      moves[MAX_MOVES];
 };
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #endif  // #ifndef MOVEPICK_H_INCLUDED

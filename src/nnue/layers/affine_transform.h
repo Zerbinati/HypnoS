@@ -37,7 +37,7 @@
     - accumulation happens directly to int32s
 */
 
-namespace Stockfish::Eval::NNUE::Layers {
+namespace Hypnos::Eval::NNUE::Layers {
 
 // Fallback implementation for older/other architectures.
 // Requires the input to be padded to at least 16 values.
@@ -303,6 +303,6 @@ class AffineTransform {
     alignas(CacheLineSize) WeightType weights[OutputDimensions * PaddedInputDimensions];
 };
 
-}  // namespace Stockfish::Eval::NNUE::Layers
+}  // namespace Hypnos::Eval::NNUE::Layers
 
 #endif  // #ifndef NNUE_LAYERS_AFFINE_TRANSFORM_H_INCLUDED

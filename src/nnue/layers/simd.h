@@ -16,8 +16,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef STOCKFISH_SIMD_H_INCLUDED
-#define STOCKFISH_SIMD_H_INCLUDED
+#ifndef HYPNOS_SIMD_H_INCLUDED
+#define HYPNOS_SIMD_H_INCLUDED
 
 #if defined(USE_AVX2)
     #include <immintrin.h>
@@ -35,7 +35,7 @@
     #include <arm_neon.h>
 #endif
 
-namespace Stockfish::Simd {
+namespace Hypnos::Simd {
 
 #if defined(USE_AVX512)
 

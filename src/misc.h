@@ -45,7 +45,7 @@
 #define stringify2(x) #x
 #define stringify(x) stringify2(x)
 
-namespace Stockfish {
+namespace Hypnos {
 
 std::string engine_info(bool to_uci = false);
 std::string compiler_info();
@@ -395,6 +395,6 @@ namespace Utility
     };
 }
 
-} // namespace Stockfish
+} // namespace Hypnos
 
 #endif // #ifndef MISC_H_INCLUDED

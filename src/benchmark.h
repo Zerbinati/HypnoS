@@ -23,12 +23,12 @@
 #include <string>
 #include <vector>
 
-namespace Stockfish {
+namespace Hypnos {
 
 class Position;
 
 std::vector<std::string> setup_bench(const Position&, std::istream&);
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #endif  // #ifndef BENCHMARK_H_INCLUDED

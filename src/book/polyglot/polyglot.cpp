@@ -8,7 +8,7 @@
 #include "polyglot.h"
 
 using namespace std;
-using namespace Stockfish;
+using namespace Hypnos;
 
 namespace
 {
@@ -367,7 +367,7 @@ namespace
     auto randomEngine = default_random_engine(now());
 } // namespace
 
-namespace Stockfish::Book::Polyglot
+namespace Hypnos::Book::Polyglot
 {
     unsigned char* PolyglotBook::data() const
     {

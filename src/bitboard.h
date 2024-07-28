@@ -28,14 +28,14 @@
 
 #include "types.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 namespace Bitboards {
 
 void        init();
 std::string pretty(Bitboard b);
 
-}  // namespace Stockfish::Bitboards
+}  // namespace Hypnos::Bitboards
 
 constexpr Bitboard FileABB = 0x0101010101010101ULL;
 constexpr Bitboard FileBBB = FileABB << 1;
@@ -366,6 +366,6 @@ inline Square pop_lsb(Bitboard& b) {
     return s;
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #endif  // #ifndef BITBOARD_H_INCLUDED

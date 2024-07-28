@@ -28,7 +28,7 @@
 
 using std::string;
 
-namespace Stockfish {
+namespace Hypnos {
 
 bool                              Tune::update_on_last;
 const UCI::Option*                LastOption = nullptr;
@@ -96,7 +96,7 @@ void Tune::Entry<Tune::PostUpdate>::read_option() {
     value();
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 
 // Init options with tuning session results instead of default values. Useful to
@@ -109,9 +109,9 @@ void Tune::Entry<Tune::PostUpdate>::read_option() {
 // Then paste the output below, as the function body
 
 
-namespace Stockfish {
+namespace Hypnos {
 
 void Tune::read_results() { /* ...insert your values here... */
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos

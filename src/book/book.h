@@ -5,7 +5,7 @@
 #include "../types.h"
 #include "../position.h"
 
-namespace Stockfish::Book
+namespace Hypnos::Book
 {
     namespace BookUtil
     {

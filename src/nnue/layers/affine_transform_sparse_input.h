@@ -34,7 +34,7 @@
   This file contains the definition for a fully connected layer (aka affine transform) with block sparse input.
 */
 
-namespace Stockfish::Eval::NNUE::Layers {
+namespace Hypnos::Eval::NNUE::Layers {
 
 #if (USE_SSSE3 | (USE_NEON >= 8))
 alignas(CacheLineSize) static inline const
@@ -272,6 +272,6 @@ class AffineTransformSparseInput {
     alignas(CacheLineSize) WeightType weights[OutputDimensions * PaddedInputDimensions];
 };
 
-}  // namespace Stockfish::Eval::NNUE::Layers
+}  // namespace Hypnos::Eval::NNUE::Layers
 
 #endif  // #ifndef NNUE_LAYERS_AFFINE_TRANSFORM_SPARSE_INPUT_H_INCLUDED

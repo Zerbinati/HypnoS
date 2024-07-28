@@ -31,7 +31,7 @@
 
     #include <pthread.h>
 
-namespace Stockfish {
+namespace Hypnos {
 
 static const size_t TH_STACK_SIZE = 8 * 1024 * 1024;
 
@@ -58,15 +58,15 @@ class NativeThread {
     void join() { pthread_join(thread, nullptr); }
 };
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #else  // Default case: use STL classes
 
-namespace Stockfish {
+namespace Hypnos {
 
 using NativeThread = std::thread;
 
-}  // namespace Stockfish
+}  // namespace Hypnos
 
 #endif
 

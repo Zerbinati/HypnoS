@@ -27,12 +27,12 @@
 #include "../../types.h"
 #include "../nnue_common.h"
 
-namespace Stockfish {
+namespace Hypnos {
 struct StateInfo;
 class Position;
 }
 
-namespace Stockfish::Eval::NNUE::Features {
+namespace Hypnos::Eval::NNUE::Features {
 
 // Feature HalfKAv2_hm: Combination of the position of own king
 // and the position of pieces. Position mirrored such that king always on e..h files.
@@ -145,6 +145,6 @@ class HalfKAv2_hm {
     static bool requires_refresh(const StateInfo* st, Color perspective);
 };
 
-}  // namespace Stockfish::Eval::NNUE::Features
+}  // namespace Hypnos::Eval::NNUE::Features
 
 #endif  // #ifndef NNUE_FEATURES_HALF_KA_V2_HM_H_INCLUDED

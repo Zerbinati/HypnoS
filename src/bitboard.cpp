@@ -24,7 +24,7 @@
 
 #include "misc.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 uint8_t PopCnt16[1 << 16];
 uint8_t SquareDistance[SQUARE_NB][SQUARE_NB];
@@ -215,4 +215,4 @@ void init_magics(PieceType pt, Bitboard table[], Magic magics[]) {
 }
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos

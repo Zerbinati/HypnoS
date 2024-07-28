@@ -31,7 +31,7 @@
 #include "experience.h"
 #include "book/book.h"
 
-using namespace Stockfish;
+using namespace Hypnos;
 
 int main(int argc, char* argv[]) {
 

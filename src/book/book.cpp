@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace Stockfish::Book
+namespace Hypnos::Book
 {
     namespace
     {

@@ -23,11 +23,11 @@
 
 #include "../search.h"
 
-namespace Stockfish {
+namespace Hypnos {
 class Position;
 }
 
-namespace Stockfish::Tablebases {
+namespace Hypnos::Tablebases {
 
 enum WDLScore {
     WDLLoss        = -2,  // Loss
@@ -54,6 +54,6 @@ bool     root_probe(Position& pos, Search::RootMoves& rootMoves);
 bool     root_probe_wdl(Position& pos, Search::RootMoves& rootMoves);
 void     rank_root_moves(Position& pos, Search::RootMoves& rootMoves);
 
-}  // namespace Stockfish::Tablebases
+}  // namespace Hypnos::Tablebases
 
 #endif

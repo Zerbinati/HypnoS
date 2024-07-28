@@ -48,7 +48,7 @@
 #include "tt.h"
 #include "uci.h"
 
-namespace Stockfish {
+namespace Hypnos {
 
 namespace Search {
 
@@ -122,7 +122,7 @@ Value value_draw(const Thread* thisThread) {
 // Skill structure is used to implement strength limit. If we have a UCI_Elo,
 // we convert it to an appropriate skill level, anchored to the Stash engine.
 // This method is based on a fit of the Elo results for games played between
-// Stockfish at various skill levels and various versions of the Stash engine.
+// Hypnos at various skill levels and various versions of the Stash engine.
 // Skill 0 .. 19 now covers CCRL Blitz Elo from 1320 to 3190, approximately
 // Reference: https://github.com/vondele/Stockfish/commit/a08b8d4e9711c2
 struct Skill {
@@ -210,6 +210,9 @@ void Search::init() {
 // Resets search state to its initial value
 void Search::clear() {
 
+    if (Options["NeverClearHash"])
+	return;
+
     Threads.main()->wait_for_search_finished();
 
     Time.availableNodes = 0;
@@ -238,7 +241,10 @@ void MainThread::search() {
 
     Color us = rootPos.side_to_move();
     Time.init(Limits, us, rootPos.game_ply());
+    if (!Limits.infinite)
     TT.new_search();
+    else
+    TT.infinite_search();
 
     Eval::NNUE::verify();
     variety = Options["Variety"];
@@ -259,7 +265,6 @@ void MainThread::search() {
           Move bookMove = Book::probe(rootPos);
 
             // Check experience book
-			   
             if (bookMove == MOVE_NONE && (bool) Options["Experience Book"]
                 && rootPos.game_ply() / 2 < (int) Options["Experience Book Max Moves"]
                 && Experience::enabled())
@@ -573,7 +578,7 @@ void Thread::search() {
                 // for every four searchAgain steps (see issue #2717).
                 Depth adjustedDepth =
                   std::max(1, rootDepth - failedHighCnt - 3 * (searchAgainCounter + 1) / 4);
-                bestValue = Stockfish::search<Root>(rootPos, ss, alpha, beta, adjustedDepth, false);
+                bestValue = Hypnos::search<Root>(rootPos, ss, alpha, beta, adjustedDepth, false);
 
                 // Bring the best move to the front. It is critical that sorting
                 // is done with a stable algorithm because all the values but the
@@ -2329,4 +2334,4 @@ void Tablebases::rank_root_moves(Position& pos, Search::RootMoves& rootMoves) {
     }
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos

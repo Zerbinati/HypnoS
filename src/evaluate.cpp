@@ -58,7 +58,7 @@ const unsigned int         gEmbeddedNNUESmallSize    = 1;
 #endif
 
 
-namespace Stockfish {
+namespace Hypnos {
 
 namespace Eval {
 
@@ -265,4 +265,4 @@ std::string Eval::trace(Position& pos) {
     return ss.str();
 }
 
-}  // namespace Stockfish
+}  // namespace Hypnos
