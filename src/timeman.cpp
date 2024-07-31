@@ -28,7 +28,6 @@ namespace Hypnos {
 
 TimeManagement Time;  // Our global time management object
 
-
 // Called at the beginning of the search and calculates
 // the bounds of time allowed for the current game ply. We currently support:
 //      1) x basetime (+ z increment)
