@@ -52,7 +52,8 @@ struct StateInfo {
     Bitboard   checkersBB;
     StateInfo* previous;
     Bitboard   blockersForKing[COLOR_NB];
-    Bitboard   pinners[COLOR_NB];
+    Bitboard   pinners[COLOR_NB]; // pin an opponent piece to the king
+    Bitboard   snipers[COLOR_NB]; // between king and our sniper there's our piece
     Bitboard   checkSquares[PIECE_TYPE_NB];
     Piece      capturedPiece;
     int        repetition;
