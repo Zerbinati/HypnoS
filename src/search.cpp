@@ -1593,8 +1593,8 @@ moves_loop:  // When in check, search starts here
                 else
                 {
                     // Reduce other moves if we have found at least one score improvement (~2 Elo)
-                    if (depth > 2 && depth < 12 && beta < 14206 && value > -12077)
-                        depth -= 1 + ss->ttPv;
+                    if (move == ttMove && depth > 2 && depth < 12 && beta < 14206 && value > -12077)
+                        depth -= 2;
 
                     assert(depth > 0);
                     alpha = value;  // Update alpha! Always alpha < beta
