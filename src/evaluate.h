@@ -24,7 +24,7 @@
 
 #include "types.h"
 
-namespace Hypnos {
+namespace Stockfish {
 
 class Position;
 
@@ -65,6 +65,6 @@ extern std::unordered_map<NNUE::NetSize, EvalFile> EvalFiles;
 
 }  // namespace Eval
 
-}  // namespace Hypnos
+}  // namespace Stockfish
 
 #endif  // #ifndef EVALUATE_H_INCLUDED

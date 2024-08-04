@@ -8,7 +8,7 @@
 #include "ctg.h"
 
 using namespace std;
-using namespace Hypnos;
+using namespace Stockfish;
 
 namespace
 {
@@ -511,7 +511,7 @@ namespace
 	};
 }
 
-namespace Hypnos::Book::CTG
+namespace Stockfish::Book::CTG
 {
 	bool CtgBook::decode(const Position& pos, CtgPositionData& positionData) const
 	{

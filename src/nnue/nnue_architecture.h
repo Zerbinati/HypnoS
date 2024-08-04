@@ -32,7 +32,7 @@
 #include "layers/sqr_clipped_relu.h"
 #include "nnue_common.h"
 
-namespace Hypnos::Eval::NNUE {
+namespace Stockfish::Eval::NNUE {
 
 // Input features used in evaluation function
 using FeatureSet = Features::HalfKAv2_hm;
@@ -137,6 +137,6 @@ struct Network {
     }
 };
 
-}  // namespace Hypnos::Eval::NNUE
+}  // namespace Stockfish::Eval::NNUE
 
 #endif  // #ifndef NNUE_ARCHITECTURE_H_INCLUDED

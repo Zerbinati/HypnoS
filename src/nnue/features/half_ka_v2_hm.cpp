@@ -25,7 +25,7 @@
 #include "../../types.h"
 #include "../nnue_common.h"
 
-namespace Hypnos::Eval::NNUE::Features {
+namespace Stockfish::Eval::NNUE::Features {
 
 // Index of a feature for a given king position and another piece on some square
 template<Color Perspective>
@@ -83,4 +83,4 @@ bool HalfKAv2_hm::requires_refresh(const StateInfo* st, Color perspective) {
     return st->dirtyPiece.piece[0] == make_piece(perspective, KING);
 }
 
-}  // namespace Hypnos::Eval::NNUE::Features
+}  // namespace Stockfish::Eval::NNUE::Features

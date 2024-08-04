@@ -26,7 +26,7 @@
 #include "bitboard.h"
 #include "position.h"
 
-namespace Hypnos {
+namespace Stockfish {
 
 namespace {
 
@@ -360,4 +360,4 @@ top:
     return MOVE_NONE;  // Silence warning
 }
 
-}  // namespace Hypnos
+}  // namespace Stockfish

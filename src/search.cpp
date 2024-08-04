@@ -48,7 +48,7 @@
 #include "tt.h"
 #include "uci.h"
 
-namespace Hypnos {
+namespace Stockfish {
 
 namespace Search {
 
@@ -77,6 +77,9 @@ enum NodeType {
     PV,
     Root
 };
+
+static constexpr double EvalLevel[10] = {1.043, 1.017, 0.952, 1.009, 0.971,
+                                         1.002, 0.992, 0.947, 1.046, 1.001};
 
 // Futility margin
 Value futility_margin(Depth d, bool noTtCutNode, bool improving, bool oppWorsening) {
@@ -119,7 +122,7 @@ Value value_draw(const Thread* thisThread) {
 // Skill structure is used to implement strength limit. If we have a UCI_Elo,
 // we convert it to an appropriate skill level, anchored to the Stash engine.
 // This method is based on a fit of the Elo results for games played between
-// Hypnos at various skill levels and various versions of the Stash engine.
+// Stockfish at various skill levels and various versions of the Stash engine.
 // Skill 0 .. 19 now covers CCRL Blitz Elo from 1320 to 3190, approximately
 // Reference: https://github.com/vondele/Stockfish/commit/a08b8d4e9711c2
 struct Skill {
@@ -207,9 +210,6 @@ void Search::init() {
 // Resets search state to its initial value
 void Search::clear() {
 
-    if (Options["NeverClearHash"])
-	return;
-
     Threads.main()->wait_for_search_finished();
 
     Time.availableNodes = 0;
@@ -238,10 +238,7 @@ void MainThread::search() {
 
     Color us = rootPos.side_to_move();
     Time.init(Limits, us, rootPos.game_ply());
-    if (!Limits.infinite)
     TT.new_search();
-    else
-    TT.infinite_search();
 
     Eval::NNUE::verify();
     variety = Options["Variety"];
@@ -262,6 +259,7 @@ void MainThread::search() {
           Move bookMove = Book::probe(rootPos);
 
             // Check experience book
+			   
             if (bookMove == MOVE_NONE && (bool) Options["Experience Book"]
                 && rootPos.game_ply() / 2 < (int) Options["Experience Book Max Moves"]
                 && Experience::enabled())
@@ -466,8 +464,6 @@ void MainThread::search() {
     std::cout << sync_endl;
 }
 
-double Time_optimum();
-
 // Main iterative deepening loop. It calls search()
 // repeatedly with increasing depth until the allocated thinking time has been
 // consumed, the user stops the search, or the maximum search depth is reached.
@@ -524,11 +520,6 @@ void Thread::search() {
 
     int searchAgainCounter = 0;
 
-    // Use the global function to_sq to get the target square
-    Square capSq = to_sq(rootMoves[0].pv[0]);  
-
-    Search::Limits.capSq = capSq;
-
     // Iterative deepening loop until requested to stop or the target depth is reached
     while (++rootDepth < MAX_PLY && !Threads.stop
            && !(Limits.depth && mainThread && rootDepth > Limits.depth))
@@ -582,7 +573,7 @@ void Thread::search() {
                 // for every four searchAgain steps (see issue #2717).
                 Depth adjustedDepth =
                   std::max(1, rootDepth - failedHighCnt - 3 * (searchAgainCounter + 1) / 4);
-                bestValue = Hypnos::search<Root>(rootPos, ss, alpha, beta, adjustedDepth, false);
+                bestValue = Stockfish::search<Root>(rootPos, ss, alpha, beta, adjustedDepth, false);
 
                 // Bring the best move to the front. It is critical that sorting
                 // is done with a stable algorithm because all the values but the
@@ -685,10 +676,9 @@ void Thread::search() {
             timeReduction    = lastBestMoveDepth + 8 < completedDepth ? 1.495 : 0.687;
             double reduction = (1.48 + mainThread->previousTimeReduction) / (2.17 * timeReduction);
             double bestMoveInstability = 1 + 1.88 * totBestMoveChanges / Threads.size();
-            double recapture           = Search::Limits.capSq == to_sq(rootMoves[0].pv[0]) ? 0.955 : 1.005;
+			int    el                  = std::clamp((bestValue + 750) / 150, 0, 9);
 
-            double totalTime = Time.optimum() * fallingEval * reduction
-                             * bestMoveInstability * recapture;
+            double totalTime = Time.optimum() * fallingEval * reduction * bestMoveInstability * EvalLevel[el];
 
             // Cap used time in case of a single legal move for a better viewer experience
             if (rootMoves.size() == 1)
@@ -1507,10 +1497,6 @@ moves_loop:  // When in check, search starts here
         {
             (ss + 1)->pv    = pv;
             (ss + 1)->pv[0] = MOVE_NONE;
-
-            // Extend move from transposition table if we are about to dive into qsearch.
-            if (move == ttMove && ss->ply <= thisThread->rootDepth * 2)
-                newDepth = std::max(newDepth, 1);
 
             value = -search<PV>(pos, ss + 1, -beta, -alpha, newDepth, false);
         }
@@ -2339,4 +2325,4 @@ void Tablebases::rank_root_moves(Position& pos, Search::RootMoves& rootMoves) {
     }
 }
 
-}  // namespace Hypnos
+}  // namespace Stockfish

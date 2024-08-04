@@ -42,7 +42,7 @@
 
 using std::string;
 
-namespace Hypnos {
+namespace Stockfish {
 
 namespace Zobrist {
 
@@ -2084,4 +2084,4 @@ bool Position::pos_is_ok() const {
     return true;
 }
 
-}  // namespace Hypnos
+}  // namespace Stockfish

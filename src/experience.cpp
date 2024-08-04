@@ -34,7 +34,7 @@
 #include "experience.h"
 
 using namespace std;
-using namespace Hypnos;
+using namespace Stockfish;
 
 #define USE_GOOGLE_SPARSEHASH_DENSEMAP
 #define USE_CUSTOM_HASHER
@@ -74,7 +74,7 @@ class SugaRMap: public google::dense_hash_map<tKey, tVal> {
     #endif
 
 template<typename tVal>
-class SugaRKeyMap: public SugaRMap<Hypnos::Key, tVal> {
+class SugaRKeyMap: public SugaRMap<Stockfish::Key, tVal> {
    public:
     SugaRKeyMap() :
         SugaRMap<Key, tVal>(static_cast<Key>(0), static_cast<Key>(-1)) {}

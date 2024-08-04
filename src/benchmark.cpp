@@ -95,7 +95,7 @@ const std::vector<std::string> Defaults = {
 
 }  // namespace
 
-namespace Hypnos {
+namespace Stockfish {
 
 // Builds a list of UCI commands to be run by bench. There
 // are five parameters: TT size in MB, number of search threads that
@@ -162,4 +162,4 @@ std::vector<std::string> setup_bench(const Position& current, std::istream& is) 
     return list;
 }
 
-}  // namespace Hypnos
+}  // namespace Stockfish

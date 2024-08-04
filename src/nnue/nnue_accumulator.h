@@ -26,7 +26,7 @@
 #include "nnue_architecture.h"
 #include "nnue_common.h"
 
-namespace Hypnos::Eval::NNUE {
+namespace Stockfish::Eval::NNUE {
 
 // Class that holds the result of affine transformation of input features
 template<IndexType Size>
@@ -37,6 +37,6 @@ struct alignas(CacheLineSize) Accumulator {
 	bool         computedPSQT[2];
 };
 
-}  // namespace Hypnos::Eval::NNUE
+}  // namespace Stockfish::Eval::NNUE
 
 #endif  // NNUE_ACCUMULATOR_H_INCLUDED

@@ -34,7 +34,7 @@
 #include "nnue_architecture.h"
 #include "nnue_common.h"
 
-namespace Hypnos::Eval::NNUE {
+namespace Stockfish::Eval::NNUE {
 
 using BiasType       = std::int16_t;
 using WeightType     = std::int16_t;
@@ -765,6 +765,6 @@ class FeatureTransformer {
     alignas(CacheLineSize) PSQTWeightType psqtWeights[InputDimensions * PSQTBuckets];
 };
 
-}  // namespace Hypnos::Eval::NNUE
+}  // namespace Stockfish::Eval::NNUE
 
 #endif  // #ifndef NNUE_FEATURE_TRANSFORMER_H_INCLUDED

@@ -26,7 +26,7 @@
 #include "thread.h"
 #include "types.h"
 
-namespace Hypnos {
+namespace Stockfish {
 
 // The TimeManagement class computes the optimal time to think depending on
 // the maximum available time, the game move number, and other parameters.
@@ -49,6 +49,6 @@ class TimeManagement {
 
 extern TimeManagement Time;
 
-}  // namespace Hypnos
+}  // namespace Stockfish
 
 #endif  // #ifndef TIMEMAN_H_INCLUDED

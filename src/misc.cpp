@@ -87,7 +87,7 @@ using fun8_t = bool(*)(HANDLE, BOOL, PTOKEN_PRIVILEGES, DWORD, PTOKEN_PRIVILEGES
 
 using namespace std;
 
-namespace Hypnos {
+namespace Stockfish {
 
 namespace {
 
@@ -1665,7 +1665,7 @@ namespace Utility
         va_end(vaArgs);
 
         return string(v.data(), len);
-}
-}  // namespace Utility
+    }
+} // namespace Utility
 
-}  // namespace Hypnos
+} // namespace Stockfish

@@ -27,7 +27,7 @@
 
 #include "../nnue_common.h"
 
-namespace Hypnos::Eval::NNUE::Layers {
+namespace Stockfish::Eval::NNUE::Layers {
 
 // Clipped ReLU
 template<IndexType InDims>
@@ -163,6 +163,6 @@ class ClippedReLU {
     }
 };
 
-}  // namespace Hypnos::Eval::NNUE::Layers
+}  // namespace Stockfish::Eval::NNUE::Layers
 
 #endif  // NNUE_LAYERS_CLIPPED_RELU_H_INCLUDED

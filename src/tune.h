@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace Hypnos {
+namespace Stockfish {
 
 using Range    = std::pair<int, int>;  // Option's min-max values
 using RangeFun = Range(int);
@@ -171,6 +171,6 @@ class Tune {
 
 #define UPDATE_ON_LAST() bool UNIQUE(p, __LINE__) = Tune::update_on_last = true
 
-}  // namespace Hypnos
+}  // namespace Stockfish
 
 #endif  // #ifndef TUNE_H_INCLUDED

@@ -32,11 +32,11 @@
 #include "nnue_feature_transformer.h"
 #include "../types.h"
 
-namespace Hypnos {
+namespace Stockfish {
 class Position;
 }
 
-namespace Hypnos::Eval::NNUE {
+namespace Stockfish::Eval::NNUE {
 
 // Hash value of evaluation function structure
 constexpr std::uint32_t HashValue[2] = {
@@ -80,6 +80,6 @@ bool load_eval(const std::string name, std::istream& stream, NetSize netSize);
 bool save_eval(std::ostream& stream, NetSize netSize);
 bool save_eval(const std::optional<std::string>& filename, NetSize netSize);
 
-}  // namespace Hypnos::Eval::NNUE
+}  // namespace Stockfish::Eval::NNUE
 
 #endif  // #ifndef NNUE_EVALUATE_NNUE_H_INCLUDED

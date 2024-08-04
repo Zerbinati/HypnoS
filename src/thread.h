@@ -32,7 +32,7 @@
 #include "thread_win32_osx.h"
 #include "types.h"
 
-namespace Hypnos {
+namespace Stockfish {
 
 // Thread class keeps together all the thread-related stuff.
 class Thread {
@@ -134,6 +134,6 @@ struct ThreadPool {
 
 extern ThreadPool Threads;
 
-}  // namespace Hypnos
+}  // namespace Stockfish
 
 #endif  // #ifndef THREAD_H_INCLUDED

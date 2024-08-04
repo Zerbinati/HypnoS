@@ -38,7 +38,7 @@
 #include "nnue_accumulator.h"
 #include "nnue_common.h"
 
-namespace Hypnos::Eval::NNUE {
+namespace Stockfish::Eval::NNUE {
 
 // Input feature converter
 LargePagePtr<FeatureTransformer<TransformedFeatureDimensionsBig, &StateInfo::accumulatorBig>>
@@ -476,4 +476,4 @@ bool save_eval(const std::optional<std::string>& filename, NetSize netSize) {
 }
 
 
-}  // namespace Hypnos::Eval::NNUE
+}  // namespace Stockfish::Eval::NNUE

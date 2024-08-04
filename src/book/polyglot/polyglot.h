@@ -10,7 +10,7 @@ namespace
     struct PolyglotBookMove;
 }
 
-namespace Hypnos::Book::Polyglot
+namespace Stockfish::Book::Polyglot
 {
     class PolyglotBook : public Book
     {

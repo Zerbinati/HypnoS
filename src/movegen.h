@@ -24,7 +24,7 @@
 
 #include "types.h"
 
-namespace Hypnos {
+namespace Stockfish {
 
 class Position;
 
@@ -71,6 +71,6 @@ struct MoveList {
     ExtMove moveList[MAX_MOVES], *last;
 };
 
-}  // namespace Hypnos
+}  // namespace Stockfish
 
 #endif  // #ifndef MOVEGEN_H_INCLUDED

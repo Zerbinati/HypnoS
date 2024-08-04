@@ -26,7 +26,7 @@
 #include "movepick.h"
 #include "types.h"
 
-namespace Hypnos {
+namespace Stockfish {
 
 class Position;
 
@@ -93,7 +93,6 @@ struct LimitsType {
         time[WHITE] = time[BLACK] = inc[WHITE] = inc[BLACK] = npmsec = movetime = TimePoint(0);
         movestogo = depth = mate = perft = infinite = 0;
         nodes                                       = 0;
-        capSq                                       = SQ_NONE;
     }
 
     bool use_time_management() const { return time[WHITE] || time[BLACK]; }
@@ -102,7 +101,6 @@ struct LimitsType {
     TimePoint         time[COLOR_NB], inc[COLOR_NB], npmsec, movetime, startTime;
     int               movestogo, depth, mate, perft, infinite;
     int64_t           nodes;
-    Square            capSq;  
 };
 
 extern LimitsType Limits;
@@ -112,6 +110,6 @@ void clear();
 
 }  // namespace Search
 
-}  // namespace Hypnos
+}  // namespace Stockfish
 
 #endif  // #ifndef SEARCH_H_INCLUDED

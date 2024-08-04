@@ -24,7 +24,7 @@
 #include "bitboard.h"
 #include "position.h"
 
-namespace Hypnos {
+namespace Stockfish {
 
 namespace {
 
@@ -277,4 +277,4 @@ ExtMove* generate<LEGAL>(const Position& pos, ExtMove* moveList) {
     return moveList;
 }
 
-}  // namespace Hypnos
+}  // namespace Stockfish

@@ -24,9 +24,10 @@
 #include "search.h"
 #include "uci.h"
 
-namespace Hypnos {
+namespace Stockfish {
 
 TimeManagement Time;  // Our global time management object
+
 
 // Called at the beginning of the search and calculates
 // the bounds of time allowed for the current game ply. We currently support:
@@ -112,4 +113,4 @@ void TimeManagement::init(Search::LimitsType& limits, Color us, int ply) {
         optimumTime += optimumTime / 4;
 }
 
-}  // namespace Hypnos
+}  // namespace Stockfish
