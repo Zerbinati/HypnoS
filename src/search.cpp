@@ -78,6 +78,9 @@ enum NodeType {
     Root
 };
 
+static constexpr double EvalLevel[10] = {1.043, 1.017, 0.952, 1.009, 0.971,
+                                         1.002, 0.992, 0.947, 1.046, 1.001};
+
 // Futility margin
 Value futility_margin(Depth d, bool noTtCutNode, bool improving, bool oppWorsening) {
     Value futilityMult       = 118 - 44 * noTtCutNode;
@@ -466,8 +469,6 @@ void MainThread::search() {
     std::cout << sync_endl;
 }
 
-double Time_optimum();
-
 // Main iterative deepening loop. It calls search()
 // repeatedly with increasing depth until the allocated thinking time has been
 // consumed, the user stops the search, or the maximum search depth is reached.
@@ -523,11 +524,6 @@ void Thread::search() {
     multiPv = std::min(multiPv, rootMoves.size());
 
     int searchAgainCounter = 0;
-
-    // Use the global function to_sq to get the target square
-    Square capSq = to_sq(rootMoves[0].pv[0]);  
-
-    Search::Limits.capSq = capSq;
 
     // Iterative deepening loop until requested to stop or the target depth is reached
     while (++rootDepth < MAX_PLY && !Threads.stop
@@ -685,10 +681,9 @@ void Thread::search() {
             timeReduction    = lastBestMoveDepth + 8 < completedDepth ? 1.495 : 0.687;
             double reduction = (1.48 + mainThread->previousTimeReduction) / (2.17 * timeReduction);
             double bestMoveInstability = 1 + 1.88 * totBestMoveChanges / Threads.size();
-            double recapture           = Search::Limits.capSq == to_sq(rootMoves[0].pv[0]) ? 0.955 : 1.005;
+			int    el                  = std::clamp((bestValue + 750) / 150, 0, 9);
 
-            double totalTime = Time.optimum() * fallingEval * reduction
-                             * bestMoveInstability * recapture;
+            double totalTime = Time.optimum() * fallingEval * reduction * bestMoveInstability * EvalLevel[el];
 
             // Cap used time in case of a single legal move for a better viewer experience
             if (rootMoves.size() == 1)
@@ -1507,10 +1502,6 @@ moves_loop:  // When in check, search starts here
         {
             (ss + 1)->pv    = pv;
             (ss + 1)->pv[0] = MOVE_NONE;
-
-            // Extend move from transposition table if we are about to dive into qsearch.
-            if (move == ttMove && ss->ply <= thisThread->rootDepth * 2)
-                newDepth = std::max(newDepth, 1);
 
             value = -search<PV>(pos, ss + 1, -beta, -alpha, newDepth, false);
         }
