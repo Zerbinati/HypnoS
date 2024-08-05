@@ -133,11 +133,11 @@ struct LimitsType {
 // The UCI stores the uci options, thread pool, and transposition table.
 // This struct is used to easily forward data to the Search::Worker class.
 struct SharedState {
-    SharedState(BookManager&                                bm,
-                const OptionsMap&                           optionsMap,
-                ThreadPool&                                 threadPool,
-                TranspositionTable&                         transpositionTable,
-                const NumaReplicated<Eval::NNUE::Networks>& nets) :
+    SharedState(BookManager&                                    bm,
+                const OptionsMap&                               optionsMap,
+                ThreadPool&                                     threadPool,
+                TranspositionTable&                             transpositionTable,
+                const LazyNumaReplicated<Eval::NNUE::Networks>& nets) :
         bookMan(bm),
         options(optionsMap),
         threads(threadPool),
