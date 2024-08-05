@@ -99,7 +99,7 @@ Engine::Engine(std::string path) :
     options["UCI_Elo"] << Option(Hypnos::Search::Skill::LowestElo,
                                  Hypnos::Search::Skill::LowestElo,
                                  Hypnos::Search::Skill::HighestElo);
-    options["UCI_ShowWDL"] << Option(true);
+    options["UCI_ShowWDL"] << Option(false);
 
     for (int i = 0; i < BookManager::NumberOfBooks; ++i)
     {

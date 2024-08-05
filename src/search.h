@@ -145,10 +145,10 @@ struct SharedState {
         networks(nets) {}
 
     BookManager& bookMan;
-    const OptionsMap&                           options;
-    ThreadPool&                                 threads;
-    TranspositionTable&                         tt;
-    const NumaReplicated<Eval::NNUE::Networks>& networks;
+    const OptionsMap&                               options;
+    ThreadPool&                                     threads;
+    TranspositionTable&                             tt;
+    const LazyNumaReplicated<Eval::NNUE::Networks>& networks;
 };
 
 class Worker;
@@ -279,6 +279,8 @@ class Worker {
 
     bool is_mainthread() const { return threadIdx == 0; }
 
+    void ensure_network_replicated();
+
     // Public because they need to be updatable by the stats
     ButterflyHistory      mainHistory;
     CapturePieceToHistory captureHistory;
@@ -335,10 +337,10 @@ class Worker {
     Tablebases::Config tbConfig;
 
     BookManager& bookMan;
-    const OptionsMap&                           options;
-    ThreadPool&                                 threads;
-    TranspositionTable&                         tt;
-    const NumaReplicated<Eval::NNUE::Networks>& networks;
+    const OptionsMap&                               options;
+    ThreadPool&                                     threads;
+    TranspositionTable&                             tt;
+    const LazyNumaReplicated<Eval::NNUE::Networks>& networks;
 
     // Used by NNUE
     Eval::NNUE::AccumulatorCaches refreshTable;

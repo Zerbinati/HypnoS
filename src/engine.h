@@ -29,15 +29,16 @@
 #include <vector>
 
 #include "nnue/network.h"
+#include "numa.h"
 #include "position.h"
 #include "search.h"
-#include "syzygy/tbprobe.h"
+#include "syzygy/tbprobe.h"  // for Stockfish::Depth
 #include "thread.h"
 #include "tt.h"
 #include "ucioption.h"
-#include "numa.h"
 
 namespace Hypnos {
+
 enum Square : int;
 
 class Engine {
@@ -106,6 +107,7 @@ class Engine {
     std::string                            numa_config_information_as_string() const;
     std::string                            thread_binding_information_as_string() const;
     Position                               pos;
+
    private:
     const std::string binaryDirectory;
 
@@ -118,6 +120,7 @@ class Engine {
     TranspositionTable                       tt;
     LazyNumaReplicated<Eval::NNUE::Networks> networks;
     BookManager                          bookMan;
+
     Search::SearchManager::UpdateContext updateContext;
 };
 

@@ -662,13 +662,13 @@ Value Search::Worker::search(
     StateInfo st;
     ASSERT_ALIGNED(&st, Eval::NNUE::CacheLineSize);
 
-    Key  posKey;
-    Move move, excludedMove, bestMove,
-      expTTMove = Move::none();
+    Key   posKey;
+    Move  move, excludedMove, bestMove,
+    expTTMove = Move::none();
     Depth extension, newDepth;
     Value bestValue, value, eval = VALUE_NONE, maxValue, expTTValue = VALUE_NONE, probCutBeta;
-    bool givesCheck, improving, priorCapture, opponentWorsening = false;
-    bool capture, ttCapture, expTTHit         = false;
+    bool  givesCheck, improving, priorCapture, opponentWorsening = false;
+    bool  capture, ttCapture, expTTHit         = false;
     Piece movedPiece;
 
     ValueList<Move, 32> capturesSearched;
