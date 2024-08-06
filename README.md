@@ -85,6 +85,11 @@ In this example we have a fragmentation level of: 1/6 * 100 = 16.67%
 
   * #### Experience Book Width
     The number of moves to consider from the book for the same position. To play best book move, set this option to ```1```.	
+	
+  * #### Experience Book Min Depth
+  Parameter with default value of 27 to limit the minimum depth of experience move that can be used by the experience book.
+  When responding to "isready" command, make sure experience data has fully loaded before responding with "readyok" " (for better UCI compatibility) 
+
   * #### Experience Book Max Moves
 	This is a setup to limit the number of moves that can be played by the experience book.
 	If you configure 16, the engine will only play 16 moves (if available).
@@ -100,6 +105,38 @@ The minimum value for this new parameter is: 0, which means the experience move 
 
 The default value for this new parameter is: 5, which means the experience move quality will be 50% based on evaluation, and 50% based on count																			  
 
+
+  * #### Persistent Hash
+The Persistent hash function will use the following logic: 
+will only save valid entries from the hash file, so the final persisted file size is not necessary the same as the Hash size.
+Also, when loading, the current hash will not be resized, it will simply load the file entries into the current hash without resizing.
+
+  * #### NeverClearHash
+Default: false
+You can set the NeverClearHash option to avoid that the hash could be cleared by a Clear Hash or ucinewgame command.
+
+  * #### HashFile
+Default: Hypnos.hsh
+but you can set any name as long as you keep the integrity of the file extension
+
+  * #### SaveHashtoFile
+Stop the search/analysis, return to the UCI parameters then, then click the "SaveHashtoFile" button. 
+
+  * #### LoadHashfromFile
+To later reload the saved information, first make sure the "Hash File Name" is for the file you want, then click "LoadHashfromFile".
+Once it loads, you may continue analysis.
+You must make sure the current hash filename is the same as what was used when you saved the file.
+
+  * #### SmartMultiPVMode
+
+This option performs additional checks only if rootNode is true, while the base code only applies motion checking.
+Effect of differences
+Greater control: New changes allow you to skip additional movements based on smartMultiPvMode logic, which can optimize the search process.
+
+The extended code provides finer control over the order of moves in rootMoves based on smartMultiPvMode. 
+This can lead to performance optimization in some specific cases, avoiding unnecessary sorting when certain conditions are not met.
+
+To be used only in analysis mode
 
   * #### Variety
 Integer, Default: 0, Min: 0, Max: 40 To play different opening lines from default (0), if not from book (see below).
