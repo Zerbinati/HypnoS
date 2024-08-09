@@ -1452,8 +1452,7 @@ moves_loop:  // When in check, search starts here
 
         ss->statScore = 2 * thisThread->mainHistory[us][from_to(move)]
                       + (*contHist[0])[movedPiece][to_sq(move)]
-                      + (*contHist[1])[movedPiece][to_sq(move)]
-                      + (*contHist[3])[movedPiece][to_sq(move)] - 3817;
+                      + (*contHist[1])[movedPiece][to_sq(move)] - 3817;
 
         // Decrease/increase reduction for moves with a good/bad history (~8 Elo)
         r -= ss->statScore / (17662 - std::min(depth, 16) * 105);
@@ -1878,10 +1877,12 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
             if (quietCheckEvasions > 1)
                 break;
 
-            // Continuation history based pruning (~3 Elo)
-            if (!capture && (*contHist[0])[pos.moved_piece(move)][to_sq(move)]
-                          + (*contHist[1])[pos.moved_piece(move)][to_sq(move)]
-                          + thisThread->pawnHistory[pawn_structure_index(pos)][pos.moved_piece(move)][to_sq(move)] <= 4000)
+						              if (!capture
+                && (*contHist[0])[pos.moved_piece(move)][to_sq(move)]
+                       + (*contHist[1])[pos.moved_piece(move)][to_sq(move)]
+                       + thisThread->pawnHistory[pawn_structure_index(pos)][pos.moved_piece(move)]
+                                                [to_sq(move)]
+                     <= 4000)
                 continue;
 
             // Do not search moves with bad enough SEE values (~5 Elo)
