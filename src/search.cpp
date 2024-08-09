@@ -1274,10 +1274,10 @@ moves_loop:  // When in check, search starts here
                 if (!givesCheck && lmrDepth < 7 && !ss->inCheck)
                 {
                     Piece capturedPiece = pos.piece_on(to_sq(move));
-                    int   futilityEval =
+                    Value futilityValue =
                       ss->staticEval + 297 + 284 * lmrDepth + PieceValue[capturedPiece]
                       + captureHistory[movedPiece][to_sq(move)][type_of(capturedPiece)] / 7;
-                    if (futilityEval < alpha)
+                    if (futilityValue <= alpha)
                         continue;
                 }
 
@@ -1695,7 +1695,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
     Key      posKey;
     Move     ttMove, move, bestMove;
     Depth    ttDepth;
-    Value    bestValue, value, ttValue, futilityValue, futilityBase;
+    Value    bestValue, value, ttValue, futilityBase;
     bool     pvHit, givesCheck, capture;
     int      moveCount;
     Color    us = pos.side_to_move();
@@ -1834,8 +1834,8 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
                 if (moveCount > 2)
                     continue;
 
-                futilityValue = futilityBase + PieceValue[pos.piece_on(to_sq(move))];
-
+                Value futilityValue = futilityBase + PieceValue[pos.piece_on(to_sq(move))];
+ 
                 // If static eval + value of piece we are going to capture is much lower
                 // than alpha we can prune this move. (~2 Elo)
                 if (futilityValue <= alpha)
