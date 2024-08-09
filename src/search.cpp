@@ -683,7 +683,8 @@ void Thread::search() {
             double bestMoveInstability = 1 + 1.88 * totBestMoveChanges / Threads.size();
 			int    el                  = std::clamp((bestValue + 750) / 150, 0, 9);
 
-            double totalTime = Time.optimum() * fallingEval * reduction * bestMoveInstability * EvalLevel[el];
+            double totalTime = Time.optimum() * fallingEval * reduction 
+                             * bestMoveInstability * EvalLevel[el];
 
             // Cap used time in case of a single legal move for a better viewer experience
             if (rootMoves.size() == 1)
