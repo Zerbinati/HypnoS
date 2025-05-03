@@ -4,6 +4,11 @@
 
 <h1 align="center">HypnoS ++</h1>
 
+## License
+
+HypnoS ++ is based on the Stockfish engine and is distributed under the GNU General Public License v3.0.
+See the [LICENSE](./LICENSE) file for details.
+
 ## HypnoS ++ Overview
 
 
