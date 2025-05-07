@@ -35,33 +35,6 @@ It leverages distributed computing, allowing anyone to contribute CPU time to su
 
   ### UCI options
 
-  ### Time Contempt
-
-Type: Integer
-Default Value: 20
-Range: -100 to 100
-Description:
-This option sets the engine's "time contempt" factor, which influences how aggressively the engine utilizes its allocated time during the search. The value determines whether the engine should conserve time for future moves or spend more time searching for the best move at the current position.
-
-* ## Purpose:
-Helps balance time management strategies based on the game situation.
-Encourages aggressive play by spending more time in critical positions or conservative play by saving time for later.
-How It Works:
-Positive Values (e.g., 20):
-The engine is more willing to spend time in earlier moves, searching deeper in critical positions.
-Suitable for situations where early-game accuracy is critical.
-Negative Values (e.g., -20):
-The engine becomes more conservative with time usage, preserving resources for later stages of the game.
-Useful in positions where time control or efficiency is essential.
-Use Cases:
-High Positive Values (e.g., 50 to 100):
-Encourages deep analysis and aggressive play early in the game.
-Ideal for long time controls or when playing for a win.
-High Negative Values (e.g., -50 to -100):
-Promotes cautious time management and efficiency.
-Suitable for shorter time controls or drawish positions.
-
-The following is a list of options supported by HypnoS (on top of all UCI options supported by Stockfish)
 
   ### CTG/BIN Book File
 
