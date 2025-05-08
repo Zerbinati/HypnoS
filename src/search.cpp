@@ -47,6 +47,13 @@
 #include "uci.h"
 #include "book/book.h"
 
+int reduction_offset = 1346;
+int reduction_delta_mult = 896;
+int reduction_threshold = 880;
+
+float futility_factor_impr = 1.0f;
+float futility_factor_base = 0.5f;
+
 namespace Hypnos {
 
 namespace Search {
@@ -94,12 +101,12 @@ int Reductions[MAX_MOVES];  // [depth or moveNumber]
 
 Depth reduction(bool i, Depth d, int mn, int delta, int rootDelta) {
     int reductionScale = Reductions[d] * Reductions[mn];
-    return (reductionScale + 1346 - int(delta) * 896 / int(rootDelta)) / 1024
-         + (!i && reductionScale > 880);
+    return (reductionScale + reduction_offset - int(delta) * reduction_delta_mult / int(rootDelta)) / 1024
+         + (!i && reductionScale > reduction_threshold);
 }
 
 constexpr int futility_move_count(bool improving, Depth depth) {
-    return improving ? (3 + depth * depth) : (3 + depth * depth) / 2;
+    return int((3 + depth * depth) * (improving ? futility_factor_impr : futility_factor_base));
 }
 
 // Guarantee evaluation does not hit the tablebase range
