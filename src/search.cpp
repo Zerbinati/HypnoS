@@ -47,6 +47,12 @@
 #include "uci.h"
 #include "book/book.h"
 
+int futility_base = 118;
+int futility_scale_tt = 44;
+int futility_improve_scale = 53;
+int futility_worsen_base = 309;
+int futility_worsen_add = 47;
+
 namespace Hypnos {
 
 namespace Search {
@@ -80,11 +86,15 @@ enum NodeType {
 static constexpr double EvalLevel[10] = {1.043, 1.017, 0.952, 1.009, 0.971,
                                          1.002, 0.992, 0.947, 1.046, 1.001};
 
-// Futility margin
+/*// Futility margin
 Value futility_margin(Depth d, bool noTtCutNode, bool improving, bool oppWorsening) {
     Value futilityMult       = 118 - 44 * noTtCutNode;
     Value improvingDeduction = 53 * improving * futilityMult / 32;
-    Value worseningDeduction = (309 + 47 * improving) * oppWorsening * futilityMult / 1024;
+    Value worseningDeduction = (309 + 47 * improving) * oppWorsening * futilityMult / 1024;*/
+Value futility_margin(Depth d, bool noTtCutNode, bool improving, bool oppWorsening) {
+    Value futilityMult       = futility_base - futility_scale_tt * noTtCutNode;
+    Value improvingDeduction = futility_improve_scale * improving * futilityMult / 32;
+    Value worseningDeduction = (futility_worsen_base + futility_worsen_add * improving) * oppWorsening * futilityMult / 1024;
 
     return futilityMult * d - improvingDeduction - worseningDeduction;
 }
