@@ -116,6 +116,12 @@ void init(OptionsMap& o) {
         sync_cout << "info string Dynamic Exploration is now: " 
                   << (opt ? "enabled" : "disabled") << sync_endl;
 });
+
+    // Dynamic phase evaluation weights (used for SPSA tuning)
+    o["MaterialOpening"]    << Option(20, 0, 50);
+    o["MaterialEndgame"]    << Option(11, 0, 50);
+    o["PositionalOpening"]  << Option(9, 0, 50);
+    o["PositionalEndgame"]  << Option(20, 0, 50);
 }
 
 

@@ -44,10 +44,14 @@ namespace Hypnos::Eval::NNUE {
 // Set material and positional weights using a continuous phase coefficient
 void update_weights(double phase_coeff) {
 
-     constexpr int MATERIAL_OPENING    = 20;  // tuned value: 19.8620
+    /* constexpr int MATERIAL_OPENING    = 20;  // tuned value: 19.8620
      constexpr int MATERIAL_ENDGAME    = 11;  // tuned value: 10.6615
      constexpr int POSITIONAL_OPENING  = 9;  // tuned value: 9.0633
-     constexpr int POSITIONAL_ENDGAME  = 20;  // tuned value: 20.3018
+     constexpr int POSITIONAL_ENDGAME  = 20;  // tuned value: 20.3018*/
+    int MATERIAL_OPENING    = UCI::Options["MaterialOpening"];
+    int MATERIAL_ENDGAME    = UCI::Options["MaterialEndgame"];
+    int POSITIONAL_OPENING  = UCI::Options["PositionalOpening"];
+    int POSITIONAL_ENDGAME  = UCI::Options["PositionalEndgame"];
 
     StrategyMaterialWeight = int(
         MATERIAL_ENDGAME + (MATERIAL_OPENING - MATERIAL_ENDGAME) * phase_coeff);
