@@ -1101,7 +1101,7 @@ Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, boo
         return qsearch<PV>(pos, ss, alpha, beta);
 
     // For cutNodes without a ttMove, we decrease depth by 2 if depth is high enough.
-	// ~~~ STC +2.5 Elo @ 10+0.1s, neutral at LTC
+    // ~~~ STC +2.5 Elo @ 10+0.1s, neutral at LTC
     if (cutNode && depth >= 6 && !ttMove)
         depth -= 2;
 
