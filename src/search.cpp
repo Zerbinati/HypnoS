@@ -47,13 +47,13 @@
 #include "uci.h"
 #include "book/book.h"
 
+namespace Hypnos {
+
 int futility_base = 118;
 int futility_scale_tt = 44;
 int futility_improve_scale = 53;
 int futility_worsen_base = 309;
 int futility_worsen_add = 47;
-
-namespace Hypnos {
 
 namespace Search {
 
