@@ -49,6 +49,19 @@
 
 namespace Hypnos {
 
+double eval_level_0 = 1.043;
+double eval_level_1 = 1.017;
+double eval_level_2 = 0.952;
+double eval_level_3 = 1.009;
+double eval_level_4 = 0.971;
+double eval_level_5 = 1.002;
+double eval_level_6 = 0.992;
+double eval_level_7 = 0.947;
+double eval_level_8 = 1.046;
+double eval_level_9 = 1.001;
+
+}
+
 namespace Search {
 
 LimitsType Limits;
@@ -76,9 +89,13 @@ enum NodeType {
     PV,
     Root
 };
-
+/*
 static constexpr double EvalLevel[10] = {1.043, 1.017, 0.952, 1.009, 0.971,
-                                         1.002, 0.992, 0.947, 1.046, 1.001};
+                                         1.002, 0.992, 0.947, 1.046, 1.001};*/
+double EvalLevel[10] = {
+    Hypnos::eval_level_0, Hypnos::eval_level_1, Hypnos::eval_level_2, Hypnos::eval_level_3, Hypnos::eval_level_4,
+    Hypnos::eval_level_5, Hypnos::eval_level_6, Hypnos::eval_level_7, Hypnos::eval_level_8, Hypnos::eval_level_9
+};
 
 // Futility margin
 Value futility_margin(Depth d, bool noTtCutNode, bool improving, bool oppWorsening) {
