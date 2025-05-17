@@ -49,6 +49,14 @@
 
 namespace Hypnos {
 
+int delta_base = 10;
+int delta_scale = 12493;
+
+int optimism_scale = 132;
+int optimism_smooth = 89;
+
+}
+
 namespace Search {
 
 LimitsType Limits;
@@ -542,7 +550,7 @@ void Thread::search() {
             // Reset UCI info selDepth for each depth and each PV line
             selDepth = 0;
 
-            // Reset aspiration window starting size
+/*            // Reset aspiration window starting size
             Value avg = rootMoves[pvIdx].averageScore;
             delta     = Value(10) + int(avg) * avg / 12493;
             alpha     = std::max(avg - delta, -VALUE_INFINITE);
@@ -550,6 +558,17 @@ void Thread::search() {
 
             // Adjust optimism based on root move's averageScore (~4 Elo)
             optimism[us]  = 132 * avg / (std::abs(avg) + 89);
+            optimism[~us] = -optimism[us];
+*/
+
+            // Reset aspiration window starting size
+            Value avg = rootMoves[pvIdx].averageScore;
+            delta     = Value(Hypnos::delta_base) + int(avg) * avg / Hypnos::delta_scale;
+            alpha     = std::max(avg - delta, -VALUE_INFINITE);
+            beta      = std::min(avg + delta, int(VALUE_INFINITE));
+
+            // Adjust optimism based on root move's averageScore (~4 Elo)
+            optimism[us]  = Hypnos::optimism_scale * avg / (std::abs(avg) + Hypnos::optimism_smooth);
             optimism[~us] = -optimism[us];
 
             // Start with a small aspiration window and, in the case of a fail
