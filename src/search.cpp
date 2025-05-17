@@ -49,6 +49,18 @@
 
 namespace Hypnos {
 
+int bonus_scale = 245;
+int bonus_offset = 320;
+int bonus_clamp_min = 0;
+int bonus_clamp_max = 1296;
+
+int malus_scale = 554;
+int malus_offset = 303;
+int malus_cap = 1203;
+int malus_switch_depth = 4;
+
+}
+
 namespace Search {
 
 LimitsType Limits;
@@ -106,12 +118,25 @@ constexpr int futility_move_count(bool improving, Depth depth) {
 constexpr Value to_static_eval(const Value v) {
     return std::clamp(int(v), VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
 }
-
+/*
 // History and stats update bonus, based on depth
 int stat_bonus(Depth d) { return std::clamp(245 * d - 320, 0, 1296); }
 
 // History and stats update malus, based on depth
 int stat_malus(Depth d) { return (d < 4 ? 554 * d - 303 : 1203); }
+*/
+
+int stat_bonus(Depth d) {
+    return std::clamp(Hypnos::bonus_scale * d - Hypnos::bonus_offset,
+                      Hypnos::bonus_clamp_min,
+                      Hypnos::bonus_clamp_max);
+}
+
+int stat_malus(Depth d) {
+    return (d < Hypnos::malus_switch_depth ?
+            Hypnos::malus_scale * d - Hypnos::malus_offset :
+            Hypnos::malus_cap);
+}
 
 // Add a small random component to draw evaluations to avoid 3-fold blindness
 Value value_draw(const Thread* thisThread) {
