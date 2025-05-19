@@ -49,6 +49,16 @@
 
 namespace Hypnos {
 
+int bonus_scale = 245;
+int bonus_offset = 320;
+int bonus_clamp_min = 0;
+int bonus_clamp_max = 1296;
+
+int malus_scale = 554;
+int malus_offset = 303;
+int malus_cap = 1203;
+int malus_switch_depth = 4;
+
 namespace Search {
 
 LimitsType Limits;
@@ -108,10 +118,18 @@ constexpr Value to_static_eval(const Value v) {
 }
 
 // History and stats update bonus, based on depth
-int stat_bonus(Depth d) { return std::clamp(245 * d - 320, 0, 1296); }
+int stat_bonus(Depth d) {
+    return std::clamp(bonus_scale * d - bonus_offset,
+                      bonus_clamp_min,
+                      bonus_clamp_max);
+}
 
 // History and stats update malus, based on depth
-int stat_malus(Depth d) { return (d < 4 ? 554 * d - 303 : 1203); }
+int stat_malus(Depth d) {
+    return (d < malus_switch_depth ?
+            malus_scale * d - malus_offset :
+            malus_cap);
+}
 
 // Add a small random component to draw evaluations to avoid 3-fold blindness
 Value value_draw(const Thread* thisThread) {
