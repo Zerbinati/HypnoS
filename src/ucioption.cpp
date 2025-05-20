@@ -137,7 +137,7 @@ void init(OptionsMap& o) {
     o["Variety"] << Option(0, 0, 40);
     o["Variety Max Score"] << Option(0, 0, 50);
     o["Variety Max Moves"] << Option(0, 0, 40);    // Manual Weight Adjustment Option
-    o["NNUE ManualWeights"] << Option(false, [](const Option& opt) {
+    o["NNUE ManualWeights"] << Option(true, [](const Option& opt) {
     // Check if Manual Weights option is enabled or disabled.
      if (opt) {
         sync_cout << "info string NNUE ManualWeights enabled. Using user-defined weights." << sync_endl;
