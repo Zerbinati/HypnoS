@@ -1907,7 +1907,7 @@ Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
     if (variety && std::abs(UCI::to_cp(bestValue)) < Options["Variety Max Score"])
     {
 
-        if (bestValue + variety * UCI::NormalizeToPawnValue / 100 >= 0
+        if (bestValue + variety * Hypnos::PawnValue / 100 >= 0)
             && pos.game_ply() / 2 < Options["Variety Max Moves"])
         {
             // Range for variety bonus

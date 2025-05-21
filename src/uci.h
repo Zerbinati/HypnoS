@@ -32,12 +32,6 @@ class Position;
 
 namespace UCI {
 
-// Normalizes the internal value as reported by evaluate or search
-// to the UCI centipawn result used in output. This value is derived from
-// the win_rate_model() such that Hypnos outputs an advantage of
-// "100 centipawns" for a position if the engine has a 50% probability to win
-// from this position in self-play at fishtest LTC time control.
-const int NormalizeToPawnValue = 328;
 
 class Option;
 

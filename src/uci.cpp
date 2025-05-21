@@ -237,26 +237,22 @@ int win_rate_model(Value v, int ply) {
     // The model only captures up to 240 plies, so limit the input and then rescale
     double m = std::min(240, ply) / 64.0;
 
-    // The coefficients of a third-order polynomial fit is based on the fishtest data
-    // for two parameters that need to transform eval to the argument of a logistic
-    // function.
-    constexpr double as[] = {0.38036525, -2.82015070, 23.17882135, 307.36768407};
-    constexpr double bs[] = {-2.29434733, 13.27689788, -14.26828904, 63.45318330};
+     // The coefficients of a third-order polynomial fit is based on the fishtest data
+     // for two parameters that need to transform eval to the argument of a logistic
+     // function.
+     double as[] = { 0.50379905,  -4.12755858,  18.95487051, 152.00733652};
+     double bs[] = {-1.71790378,  10.71543602, -17.05515898,  41.15680404};
+     double a = (((as[0] * m + as[1]) * m + as[2]) * m) + as[3];
+     double b = (((bs[0] * m + bs[1]) * m + bs[2]) * m) + bs[3];
 
-    // Enforce that NormalizeToPawnValue corresponds to a 50% win rate at ply 64
-    static_assert(UCI::NormalizeToPawnValue == int(as[0] + as[1] + as[2] + as[3]));
+     // Transform the eval to centipawns with limited range
+     double x = std::clamp(double(100 * v) / PawnValue, -2000.0, 2000.0);
 
-    double a = (((as[0] * m + as[1]) * m + as[2]) * m) + as[3];
-    double b = (((bs[0] * m + bs[1]) * m + bs[2]) * m) + bs[3];
+     // Return the win rate in per mille units rounded to the nearest value
+     return int(0.5 + 1000 / (1 + std::exp((a - x) / b)));
+  }
 
-    // Transform the eval to centipawns with limited range
-    double x = std::clamp(double(v), -4000.0, 4000.0);
-
-    // Return the win rate in per mille units, rounded to the nearest integer
-    return int(0.5 + 1000 / (1 + std::exp((a - x) / b)));
-}
-
-}  // namespace
+} // namespace
 
 
 // Waits for a command from the stdin, parses it, and then calls the appropriate
@@ -367,7 +363,7 @@ void UCI::loop(int argc, char* argv[]) {
 
 // Turns a Value to an integer centipawn number,
 // without treatment of mate and similar special scores.
-int UCI::to_cp(Value v) { return 100 * v / UCI::NormalizeToPawnValue; }
+int UCI::to_cp(Value v) { return 100 * v / Hypnos::PawnValue; }
 
 // Converts a Value to a string by adhering to the UCI protocol specification:
 //
