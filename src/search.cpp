@@ -108,10 +108,10 @@ constexpr Value to_static_eval(const Value v) {
 }
 
 // History and stats update bonus, based on depth
-int stat_bonus(Depth d) { return std::clamp(245 * d - 320, 0, 1296); }
+int stat_bonus(Depth d) { return std::clamp(268 * d - 302, 8, 1278); }
 
 // History and stats update malus, based on depth
-int stat_malus(Depth d) { return (d < 4 ? 554 * d - 303 : 1203); }
+int stat_malus(Depth d) { return (d < 6 ? 554 * d - 292 : 1215); }
 
 // Add a small random component to draw evaluations to avoid 3-fold blindness
 Value value_draw(const Thread* thisThread) {
