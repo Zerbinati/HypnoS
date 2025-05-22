@@ -188,7 +188,7 @@ string engine_info(bool to_uci) {
          ss << "\n"
          << compiler_info()
          << "\nBuild date/time       : " << year << '-' << setw(2) << setfill('0') << month << '-' << setw(2) << setfill('0') << day << ' ' << __TIME__
-         << "\nOfficial Release code";
+         << "\nDevelopment code";
 
   return ss.str();
 }
