@@ -140,6 +140,10 @@ trace(Position& pos, const Eval::NNUE::Networks& networks, Eval::NNUE::Accumulat
         positionalWeight += (32 - phase) * 8;
     }
 
+    // Apply manual tuning offsets for visualization
+    materialWeight   += Eval::MaterialisticEvaluationStrategy;
+    positionalWeight += Eval::PositionalEvaluationStrategy;
+
     Value base = static_cast<Value>(
         ((materialWeight + Eval::MaterialisticEvaluationStrategy) * psqt +
          (positionalWeight + Eval::PositionalEvaluationStrategy) * positional)
@@ -170,6 +174,10 @@ trace(Position& pos, const Eval::NNUE::Networks& networks, Eval::NNUE::Accumulat
                     tempMaterialWeight   -= (32 - phase) * 8;
                     tempPositionalWeight += (32 - phase) * 8;
                 }
+
+               // Apply manual tuning offsets for visualization
+               tempMaterialWeight   += Eval::MaterialisticEvaluationStrategy;
+               tempPositionalWeight += Eval::PositionalEvaluationStrategy;
 
                 Value eval = static_cast<Value>(
                     ((tempMaterialWeight + Eval::MaterialisticEvaluationStrategy) * psqt +

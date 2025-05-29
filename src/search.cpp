@@ -52,8 +52,6 @@
 
 
 namespace Hypnos {
-       // Definition of the global variable variety
-        VarietyMode variety = VarietyMode::Off;
 
 bool explorationEnabled = false; // Initially disabled
 
@@ -142,7 +140,7 @@ void update_all_stats(const Position&      pos,
 
 // Implementation of the set_variety function
 void apply_exploration(std::vector<Move>& moveList, int depth) {
-    if (!explorationEnabled || depth <= 0)
+    if (!Eval::explorationMode || depth <= 0)
         return; // Does not apply exploration if the option is disabled or the depth is insufficient
 
     struct ScoredMove {

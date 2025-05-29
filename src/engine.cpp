@@ -169,41 +169,53 @@ Engine::Engine(std::optional<std::string> path) :
           load_small_network(o);
           return std::nullopt;
       }));
-	  
+
+    // Add UCI option: Style (0 = Default, 1 = Aggressive, 2 = Defensive, 3 = Positional)
     options.add(  //
-        "Style", Option(0, 0, 3, [](const Option& o) {
+        "Style", Option(0, 0, 3, [](const Option& o) -> std::optional<std::string> {
             int value = int(o);
-            switch (value)
-            {
-                case 1: style = Aggressive; break;
-                case 2: style = Defensive;  break;
-                case 3: style = Positional; break;
-                default: style = Default;   break;
+            switch (value) {
+                case 1: Eval::style = Eval::Aggressive; break;
+                case 2: Eval::style = Eval::Defensive;  break;
+                case 3: Eval::style = Eval::Positional; break;
+                default: Eval::style = Eval::Default;   break;
             }
 
             const char* styleNames[] = { "Default", "Aggressive", "Defensive", "Positional" };
             sync_cout << "info string Style set to: " << styleNames[value] << sync_endl;
-
             return std::nullopt;
         }));
 
+    // Force initialization at startup
+    Eval::style = Eval::Default;
 
-    options.add(  //
-	"Exploration Mode", Option(false, [](const Option& o) {
-            explorationEnabled = bool(o);
-            sync_cout << "info string Exploration Mode set to: "
-                      << (explorationEnabled ? "true" : "false") << sync_endl;
-            return std::nullopt;
-        }));
+    // Add UCI option: Exploration Mode
+    Option exploreOption(false, [](const Option& o) -> std::optional<std::string> {
+        Eval::explorationMode = bool(o);
+        sync_cout << "info string Exploration Mode set to: "
+                  << (Eval::explorationMode ? "true" : "false") << sync_endl;
+        return std::nullopt;
+    });
+
+    // Force initialization at startup
+    Eval::explorationMode = false;
+
+    // Register the option
+    options.add("Exploration Mode", exploreOption);
 		
-    options.add(  //
-        "Dynamic Strategy", Option(false,
-            [](const Option& o) -> std::optional<std::string> {
-                Eval::useDynamicStrategy = bool(o);
-                sync_cout << "info string Dynamic Strategy set to: "
-                          << (Eval::useDynamicStrategy ? "true" : "false") << sync_endl;
-                return std::nullopt;
-            }));
+    // Add UCI option: Dynamic Strategy
+    Option dynOption(false, [](const Option& o) -> std::optional<std::string> {
+        Eval::useDynamicStrategy = bool(o);
+        sync_cout << "info string Dynamic Strategy set to: "
+                  << (Eval::useDynamicStrategy ? "true" : "false") << sync_endl;
+        return std::nullopt;
+    });
+
+    // Force initialization at startup
+    Eval::useDynamicStrategy = false;
+
+    // Register the option
+    options.add("Dynamic Strategy", dynOption);
 
     options.add(  //
       "Materialistic Evaluation Strategy", Option(0, -12, 12, [](const Option& o) {

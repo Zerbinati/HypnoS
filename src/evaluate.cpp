@@ -36,13 +36,17 @@
 #include "nnue/nnue_accumulator.h"
 
 namespace Hypnos {
+namespace Eval {
 
-int Eval::MaterialisticEvaluationStrategy = 0;
-int Eval::PositionalEvaluationStrategy = 0;
-bool Eval::useDynamicStrategy = false;
+
+int       MaterialisticEvaluationStrategy = 0;
+int       PositionalEvaluationStrategy    = 0;
+bool      useDynamicStrategy              = false;
+bool      explorationMode                 = false;
+EvalStyle style                           = Default;
 
 // Aggressive style: bonus for knights near the enemy king
-int Eval::calculate_aggressiveness_bonus(const Position& pos) {
+int calculate_aggressiveness_bonus(const Position& pos) {
     int bonus = 0;
     for (Square s = SQ_A1; s <= SQ_H8; ++s) {
         if (pos.piece_on(s) == make_piece(pos.side_to_move(), KNIGHT) &&
@@ -54,7 +58,7 @@ int Eval::calculate_aggressiveness_bonus(const Position& pos) {
 }
 
 // Defensive style: penalty for isolated pawns and bonus for castling
-int Eval::calculate_defensiveness_bonus(const Position& pos) {
+int calculate_defensiveness_bonus(const Position& pos) {
     int penalty = 0;
     Bitboard pawns = pos.pieces(pos.side_to_move(), PAWN);
     for (Square s = SQ_A1; s <= SQ_H8; ++s) {
@@ -70,7 +74,7 @@ int Eval::calculate_defensiveness_bonus(const Position& pos) {
 }
 
 // Positional style: bonus for bishop pairs and rooks on the seventh rank
-int Eval::calculate_positional_bonus(const Position& pos) {
+int calculate_positional_bonus(const Position& pos) {
     int bonus = 0;
     for (Square s = SQ_A1; s <= SQ_H8; ++s) {
         if (pos.piece_on(s) == make_piece(pos.side_to_move(), BISHOP)) {
@@ -84,24 +88,21 @@ int Eval::calculate_positional_bonus(const Position& pos) {
     return bonus;
 }
 
-// Returns a static, purely materialistic evaluation of the position from
-// the point of view of the side to move. It can be divided by PawnValue to get
-// an approximation of the material advantage on the board in terms of pawns.
-int Eval::simple_eval(const Position& pos) {
+// Returns a static, purely materialistic evaluation of the position
+int simple_eval(const Position& pos) {
     Color c = pos.side_to_move();
     return PawnValue * (pos.count<PAWN>(c) - pos.count<PAWN>(~c))
          + (pos.non_pawn_material(c) - pos.non_pawn_material(~c));
 }
 
-bool Eval::use_smallnet(const Position& pos) { return std::abs(simple_eval(pos)) > 962; }
+bool use_smallnet(const Position& pos) { return std::abs(simple_eval(pos)) > 962; }
 
-// Evaluate is the evaluator for the outer world. It returns a static evaluation
-// of the position from the point of view of the side to move.
-Value Eval::evaluate(const Eval::NNUE::Networks&    networks,
-                     const Position&                pos,
-                     Eval::NNUE::AccumulatorStack&  accumulators,
-                     Eval::NNUE::AccumulatorCaches& caches,
-                     int                            optimism) {
+// Main evaluation function
+Value evaluate(const Eval::NNUE::Networks&    networks,
+               const Position&                pos,
+               Eval::NNUE::AccumulatorStack&  accumulators,
+               Eval::NNUE::AccumulatorCaches& caches,
+               int                            optimism) {
 
     assert(!pos.checkers());
 
@@ -109,61 +110,73 @@ Value Eval::evaluate(const Eval::NNUE::Networks&    networks,
     auto [psqt, positional] = smallNet ? networks.small.evaluate(pos, accumulators, &caches.small)
                                        : networks.big.evaluate(pos, accumulators, &caches.big);
 
-    Value nnue = (125 * psqt + 131 * positional) / 128;
+    int materialWeight   = 125;
+    int positionalWeight = 131;
 
-// Evaluation adjustment based on style
-if (style == Aggressive) {
-    nnue += Eval::calculate_aggressiveness_bonus(pos);
-
-    // Adds specific bonuses for the aggressive style
-    for (Square s = SQ_A1; s <= SQ_H8; ++s) {
-        if (pos.piece_on(s) == make_piece(pos.side_to_move(), KNIGHT) && pos.is_near_enemy_king(s)) {
-            nnue += 20; // Bonus for knights near the enemy king
-        }
-        if (pos.piece_on(s) == make_piece(pos.side_to_move(), PAWN) &&
-            relative_rank(pos.side_to_move(), s) >= RANK_5) {
-            nnue += 10; // Bonus for advanced pawns
-        }
-    }
-} else if (style == Defensive) {
-    nnue -= Eval::calculate_aggressiveness_bonus(pos);
-    nnue += Eval::calculate_defensiveness_bonus(pos);
-
-    // Penalizes isolated pawns
-    Bitboard pawnSet = pos.pieces(pos.side_to_move(), PAWN);
-    for (Square s = SQ_A1; s <= SQ_H8; ++s) {
-        if (pos.piece_on(s) == make_piece(pos.side_to_move(), PAWN) && pos.is_isolated(s, pawnSet)) {
-            nnue -= 15; // Penalty for isolated pawns
-        }
-    }
-
-    // Bonus for castling
-    if (pos.can_castle(CastlingRights(CastlingRights::KING_SIDE | CastlingRights::QUEEN_SIDE))) {
-        nnue += 40;
-    }
-} else if (style == Positional) {
-    nnue += Eval::calculate_positional_bonus(pos);
-
-    // Adds specific bonuses for the positional style
-    for (Square s = SQ_A1; s <= SQ_H8; ++s) {
-        if (pos.piece_on(s) == make_piece(pos.side_to_move(), BISHOP)) {
-            nnue += 10; // Bonus for the bishop pair
-        }
-        if (pos.piece_on(s) == make_piece(pos.side_to_move(), ROOK) &&
-            pos.is_on_seventh_rank(s, pos.side_to_move())) {
-            nnue += 15; // Bonus for rooks on the seventh rank
-        }
-    }
-}
-    // Re-evaluate the position when higher eval accuracy is worth the time spent
-    if (smallNet && (std::abs(nnue) < 236))
+    if (useDynamicStrategy)
     {
+        int totalPhase = 24;
+        int phase = totalPhase;
+
+        phase -= 1 * (pos.count<KNIGHT>(WHITE) + pos.count<KNIGHT>(BLACK));
+        phase -= 1 * (pos.count<BISHOP>(WHITE) + pos.count<BISHOP>(BLACK));
+        phase -= 2 * (pos.count<ROOK>(WHITE)   + pos.count<ROOK>(BLACK));
+        phase -= 4 * (pos.count<QUEEN>(WHITE)  + pos.count<QUEEN>(BLACK));
+
+        phase = std::clamp(phase, 0, totalPhase);
+
+        materialWeight   -= (totalPhase - phase);
+        positionalWeight += (totalPhase - phase);
+    }
+
+    materialWeight   += MaterialisticEvaluationStrategy;
+    positionalWeight += PositionalEvaluationStrategy;
+
+    Value nnue = (materialWeight * psqt + positionalWeight * positional) / 128;
+
+    // Evaluation adjustment based on style
+    if (style == Aggressive) {
+        nnue += calculate_aggressiveness_bonus(pos);
+        for (Square s = SQ_A1; s <= SQ_H8; ++s) {
+            if (pos.piece_on(s) == make_piece(pos.side_to_move(), KNIGHT) && pos.is_near_enemy_king(s)) {
+                nnue += 20;
+            }
+            if (pos.piece_on(s) == make_piece(pos.side_to_move(), PAWN) &&
+                relative_rank(pos.side_to_move(), s) >= RANK_5) {
+                nnue += 10;
+            }
+        }
+    } else if (style == Defensive) {
+        nnue -= calculate_aggressiveness_bonus(pos);
+        nnue += calculate_defensiveness_bonus(pos);
+        Bitboard pawnSet = pos.pieces(pos.side_to_move(), PAWN);
+        for (Square s = SQ_A1; s <= SQ_H8; ++s) {
+            if (pos.piece_on(s) == make_piece(pos.side_to_move(), PAWN) && pos.is_isolated(s, pawnSet)) {
+                nnue -= 15;
+            }
+        }
+        if (pos.can_castle(CastlingRights(CastlingRights::KING_SIDE | CastlingRights::QUEEN_SIDE))) {
+            nnue += 40;
+        }
+    } else if (style == Positional) {
+        nnue += calculate_positional_bonus(pos);
+        for (Square s = SQ_A1; s <= SQ_H8; ++s) {
+            if (pos.piece_on(s) == make_piece(pos.side_to_move(), BISHOP)) {
+                nnue += 10;
+            }
+            if (pos.piece_on(s) == make_piece(pos.side_to_move(), ROOK) &&
+                pos.is_on_seventh_rank(s, pos.side_to_move())) {
+                nnue += 15;
+            }
+        }
+    }
+
+    if (smallNet && (std::abs(nnue) < 236)) {
         std::tie(psqt, positional) = networks.big.evaluate(pos, accumulators, &caches.big);
-        nnue                       = (125 * psqt + 131 * positional) / 128;
+        nnue                       = (materialWeight * psqt + positionalWeight * positional) / 128;
         smallNet                   = false;
     }
 
-    // Blend optimism and eval with nnue complexity
     int nnueComplexity = std::abs(psqt - positional);
     optimism += optimism * nnueComplexity / 468;
     nnue -= nnue * nnueComplexity / 18000;
@@ -171,20 +184,14 @@ if (style == Aggressive) {
     int material = 535 * pos.count<PAWN>() + pos.non_pawn_material();
     int v        = (nnue * (77777 + material) + optimism * (7777 + material)) / 77777;
 
-    // Damp down the evaluation linearly when shuffling
     v -= v * pos.rule50_count() / 212;
-
-    // Guarantee evaluation does not hit the tablebase range
     v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
 
     return v;
 }
 
-// Like evaluate(), but instead of returning a value, it returns
-// a string (suitable for outputting to stdout) that contains the detailed
-// descriptions and values of each evaluation term. Useful for debugging.
-// Trace scores are from white's point of view
-std::string Eval::trace(Position& pos, const Eval::NNUE::Networks& networks) {
+// Trace/debug function
+std::string trace(Position& pos, const NNUE::Networks& networks) {
 
     if (pos.checkers())
         return "Final evaluation: none (in check)";
@@ -212,4 +219,5 @@ std::string Eval::trace(Position& pos, const Eval::NNUE::Networks& networks) {
     return ss.str();
 }
 
+}  // namespace Eval
 }  // namespace Hypnos

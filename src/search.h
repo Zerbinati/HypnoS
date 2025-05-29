@@ -45,16 +45,7 @@
 
 namespace Hypnos {
 
-    // Enum per le modalità di varietà
-    enum class VarietyMode { Off, Exploration };
-
-    // Variabile globale per la modalità attuale
-    extern VarietyMode variety;
-    extern bool explorationEnabled; // Dichiarazione della variabile globale
-
-	// Funzioni per gestire VarietyMode
-    void set_variety(const std::string& varietyOption);
-    void apply_exploration(std::vector<Move>& moveList, int depth);
+void apply_exploration(std::vector<Move>& moveList, int depth);
 
 // Different node types, used as a template parameter
 enum NodeType {
