@@ -170,7 +170,7 @@ Engine::Engine(std::optional<std::string> path) :
           return std::nullopt;
       }));
 
-    // Add UCI option: Style (0 = Default, 1 = Aggressive, 2 = Defensive, 3 = Positional)
+    // Add UCI option: Style (0 = HypnoS Default, 1 = Aggressive, 2 = Defensive, 3 = Positional)
     options.add(  //
         "Style", Option(0, 0, 3, [](const Option& o) -> std::optional<std::string> {
             int value = int(o);
@@ -181,7 +181,7 @@ Engine::Engine(std::optional<std::string> path) :
                 default: Eval::style = Eval::Default;   break;
             }
 
-            const char* styleNames[] = { "Default", "Aggressive", "Defensive", "Positional" };
+            const char* styleNames[] = { "HypnoS Default", "Aggressive", "Defensive", "Positional" };
             sync_cout << "info string Style set to: " << styleNames[value] << sync_endl;
             return std::nullopt;
         }));

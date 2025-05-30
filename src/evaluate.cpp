@@ -88,6 +88,28 @@ int calculate_positional_bonus(const Position& pos) {
     return bonus;
 }
 
+// Hypnos default style: favors central control and early development
+int calculate_hypnos_default_bonus(const Position& pos) {
+    int bonus = 0;
+
+    for (Square s = SQ_A1; s <= SQ_H8; ++s) {
+        Piece pc = pos.piece_on(s);
+        if (pc == NO_PIECE || color_of(pc) != pos.side_to_move())
+            continue;
+
+        // Bonus for early minor piece development
+        if ((type_of(pc) == KNIGHT || type_of(pc) == BISHOP) &&
+            rank_of(s) != (pos.side_to_move() == WHITE ? RANK_1 : RANK_8))
+            bonus += 10;
+
+        // Bonus for pawns controlling center (D/E file)
+        if (type_of(pc) == PAWN && (file_of(s) == FILE_D || file_of(s) == FILE_E))
+            bonus += 5;
+    }
+
+    return bonus;
+}
+
 // Returns a static, purely materialistic evaluation of the position
 int simple_eval(const Position& pos) {
     Color c = pos.side_to_move();
@@ -169,6 +191,8 @@ Value evaluate(const Eval::NNUE::Networks&    networks,
                 nnue += 15;
             }
         }
+    } else if (style == Default) {
+        nnue += calculate_hypnos_default_bonus(pos);
     }
 
     if (smallNet && (std::abs(nnue) < 236)) {

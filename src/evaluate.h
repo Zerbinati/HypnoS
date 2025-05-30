@@ -33,6 +33,7 @@ namespace Eval {
 int calculate_aggressiveness_bonus(const Position& pos);
 int calculate_defensiveness_bonus(const Position& pos);
 int calculate_positional_bonus(const Position& pos);
+int calculate_hypnos_default_bonus(const Position& pos);
 
 // The default net name MUST follow the format nn-[SHA256 first 12 digits].nnue
 // for the build process (profile-build and fishtest) to work. Do not change the
