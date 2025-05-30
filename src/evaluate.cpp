@@ -97,14 +97,21 @@ int calculate_hypnos_default_bonus(const Position& pos) {
         if (pc == NO_PIECE || color_of(pc) != pos.side_to_move())
             continue;
 
-        // Bonus for early minor piece development
+        // Early development: stronger bias
         if ((type_of(pc) == KNIGHT || type_of(pc) == BISHOP) &&
             rank_of(s) != (pos.side_to_move() == WHITE ? RANK_1 : RANK_8))
-            bonus += 10;
+            bonus += 15;
 
-        // Bonus for pawns controlling center (D/E file)
+        // Stronger center presence
         if (type_of(pc) == PAWN && (file_of(s) == FILE_D || file_of(s) == FILE_E))
-            bonus += 5;
+            bonus += 8;
+
+        // Rook on open file (no pawns)
+        if (type_of(pc) == ROOK) {
+            File f = file_of(s);
+            if (!(pos.pieces(PAWN) & file_bb(f)))
+                bonus += 12;
+        }
     }
 
     return bonus;
