@@ -88,7 +88,7 @@ int calculate_positional_bonus(const Position& pos) {
     return bonus;
 }
 
-// Hypnos default style: favors central control and early development
+// Hypnos default style
 int calculate_hypnos_default_bonus(const Position& pos) {
     int bonus = 0;
 
@@ -97,15 +97,24 @@ int calculate_hypnos_default_bonus(const Position& pos) {
         if (pc == NO_PIECE || color_of(pc) != pos.side_to_move())
             continue;
 
-        // Bonus for early minor piece development
+        // Development bonus
         if ((type_of(pc) == KNIGHT || type_of(pc) == BISHOP) &&
             rank_of(s) != (pos.side_to_move() == WHITE ? RANK_1 : RANK_8))
             bonus += 10;
 
-        // Bonus for pawns controlling center (D/E file)
+        // Center control
         if (type_of(pc) == PAWN && (file_of(s) == FILE_D || file_of(s) == FILE_E))
             bonus += 5;
+
+        // Penalty if queen developed too early
+        if (type_of(pc) == QUEEN &&
+            rank_of(s) != (pos.side_to_move() == WHITE ? RANK_1 : RANK_8))
+            bonus -= 10;
     }
+
+    // Encourage castling
+    if (pos.can_castle(CastlingRights(CastlingRights::KING_SIDE | CastlingRights::QUEEN_SIDE)))
+        bonus += 20;
 
     return bonus;
 }
