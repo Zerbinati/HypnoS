@@ -223,7 +223,7 @@ inline Piece Position::moved_piece(Move m) const { return piece_on(m.from_sq());
 inline Bitboard Position::pieces() const { return byTypeBB[ALL_PIECES]; }
 
 template<typename... PieceTypes>
-inline Bitboard Position::pieces(PieceTypes... pts) const {Add commentMore actions
+inline Bitboard Position::pieces(PieceTypes... pts) const {
     return (byTypeBB[pts] | ...);
 }
 
