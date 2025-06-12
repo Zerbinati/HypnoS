@@ -68,7 +68,6 @@ using namespace Search;
 
 namespace {
 
-
 // (*Scalers):
 // The values with Scaler asterisks have proven non-linear scaling.
 // They are optimized to time controls of 180 + 1.8 and longer,
@@ -171,7 +170,6 @@ Search::Worker::Worker(SharedState&                    sharedState,
                        std::unique_ptr<ISearchManager> sm,
                        size_t                          threadId,
                        NumaReplicatedAccessToken       token) :
-
     // Unpack the SharedState struct into member variables
     threadIdx(threadId),
     numaAccessToken(token),
@@ -629,6 +627,7 @@ void Search::Worker::clear() {
 template<NodeType nodeType>
 Value Search::Worker::search(
   Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode) {
+
     constexpr bool PvNode   = nodeType != NonPV;
     constexpr bool rootNode = nodeType == Root;
     const bool     allNode  = !(PvNode || cutNode);
@@ -762,13 +761,13 @@ Value Search::Worker::search(
             {
                 do_move(pos, ttData.move, st);
                 Key nextPosKey                             = pos.key();
+                auto [ttHitNext, ttDataNext, ttWriterNext] = tt.probe(nextPosKey);
                 undo_move(pos, ttData.move);
 
-                // Check that the ttValue after the tt move would also trigger a cutoffAdd commentMore actions
+                // Check that the ttValue after the tt move would also trigger a cutoff
                 if (!is_valid(ttDataNext.value))
                     return ttData.value;
-
-                if ((ttData.value >= beta) == (-ttDataNext.value >= beta))Add commentMore actions
+                if ((ttData.value >= beta) == (-ttDataNext.value >= beta))
                     return ttData.value;
             }
             else
@@ -958,7 +957,7 @@ Value Search::Worker::search(
     // Step 10. Internal iterative reductions
     // For PV nodes without a ttMove as well as for deep enough cutNodes, we decrease depth.
     // (*Scaler) Especially if they make IIR less aggressive.
-    if (!allNode && depth >= (PvNode ? 5 : 7) && !ttData.move)
+    if (!allNode && depth >= 6 && !ttData.move)
         depth--;
 
     // Step 11. ProbCut
@@ -1442,15 +1441,13 @@ moves_loop:  // When in check, search starts here
                     assert(value >= beta);  // Fail high
                     break;
                 }
-                else
-                {
-                    // Reduce other moves if we have found at least one score improvement
-                    if (depth > 2 && depth < 16 && !is_decisive(value))
-                        depth -= 2;
 
-                    assert(depth > 0);
-                    alpha = value;  // Update alpha! Always alpha < beta
-                }
+                // Reduce other moves if we have found at least one score improvement
+                if (depth > 2 && depth < 16 && !is_decisive(value))
+                    depth -= 2;
+
+                assert(depth > 0);
+                alpha = value;  // Update alpha! Always alpha < beta
             }
         }
 
@@ -1492,11 +1489,10 @@ moves_loop:  // When in check, search starts here
     // Bonus for prior quiet countermove that caused the fail low
     else if (!priorCapture && prevSq != SQ_NONE)
     {
-        int bonusScale = -302;
+        int bonusScale = -220;
         bonusScale += std::min(-(ss - 1)->statScore / 103, 323);
         bonusScale += std::min(73 * depth, 531);
         bonusScale += 174 * ((ss - 1)->moveCount > 8);
-        bonusScale += 90 * (ss->cutoffCnt <= 3);
         bonusScale += 144 * (!ss->inCheck && bestValue <= ss->staticEval - 104);
         bonusScale += 128 * (!(ss - 1)->inCheck && bestValue <= -(ss - 1)->staticEval - 82);
 
@@ -1650,7 +1646,7 @@ Value Search::Worker::qsearch(Position& pos, Stack* ss, Value alpha, Value beta)
         }
         else
         {
-           unadjustedStaticEval = evaluate(pos);Add commentMore actions
+            unadjustedStaticEval = evaluate(pos);
 
             ss->staticEval = bestValue =
               to_corrected_static_eval(unadjustedStaticEval, correctionValue);
